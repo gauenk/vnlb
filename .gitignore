@@ -1,0 +1,46 @@
+build/*
+cmake/*
+data/*
+output/*
+*.py[co]
+__pycache__/
+*~
+\#*
+\.\#*
+pyvnlb/python/swigpyvnlb_avx2.swig
+
+*.swp
+*.swo
+
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app

@@ -50,14 +50,15 @@ def read_pacnet_sequence(name,sigma,itype,nframes=85):
     # -- load video --
     vid = []
     for t in range(nframes):
+
         fn = path / ("%05d.npy" % (t))
-        print(fn)
         if not(fn.exists()): break
         fn = str(fn)
+
         frame = np.load(fn)
         vid.append(th.from_numpy(frame))
+
     vid = th.stack(vid)
-    print("vid.shape: ",vid.shape)
 
     return vid
 

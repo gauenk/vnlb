@@ -12,3 +12,4 @@ from .flow_utils import flow2burst,flow2img
 from .sim_utils import patch_at_index,patches_at_indices
 from .logger import Logger
 from .video_io import *
+from .timer import Timer

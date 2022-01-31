@@ -1,0 +1,42 @@
+"""
+Timer module
+
+code copied from Ross Girshick on Faster-RCNN
+"""
+
+import time
+
+class Timer(object):
+    """A simple timer."""
+    def __init__(self):
+        self.total_time = 0.
+        self.calls = 0
+        self.start_time = 0.
+        self.diff = 0.
+        self.average_time = 0.
+
+    def tic(self):
+        # using time.time instead of time.clock because time time.clock
+        # does not normalize for multithreading
+        self.start_time = time.time()
+
+    def toc(self, average=True):
+        self.diff = time.time() - self.start_time
+        self.total_time += self.diff
+        self.calls += 1
+        self.average_time = self.total_time / self.calls
+        if average:
+            return self.average_time
+        else:
+            return self.diff
+    def __str__(self):
+        return "-=-=- Timer Info -=-=-\n\
+        Total Time: {}\n\
+        Calls: {}\n\
+        Start Time: {}\n\
+        Diff: {}\n\
+        Average Time: {}\n".format(self.total_time,
+                                   self.calls,
+                                   self.start_time,
+                                   self.diff,
+                                   self.average_time)

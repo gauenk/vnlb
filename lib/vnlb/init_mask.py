@@ -92,8 +92,6 @@ def agg_boost(inds,t,c,h,w,cs_ptr):
     agg = -torch.ones(B,aggMult,3,dtype=torch.int64).to(inds.device)
 
     # -- launch --
-    print("agg.shape: ",agg.shape)
-    print("inds.shape: ",inds.shape,t,c,h,w)
     agg_boost_launcher(agg,inds,deltas,t,c,h,w,cs_ptr)
 
     # -- remove "-1" --

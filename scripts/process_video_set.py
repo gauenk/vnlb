@@ -13,6 +13,7 @@ from pathlib import Path
 import torch
 import torch as th
 import numpy as np
+from easydict import EasyDict as edict
 
 from vnlb import denoise
 from vnlb.utils import Logger
@@ -152,6 +153,20 @@ def process_video_set_func():
         noisy = read_pacnet_noisy_sequence(vid_name, opt.sigma, nframes)
         # noisy = clean + (opt.sigma / 255) * torch.randn_like(clean)
 
+        # -- set islice --
+        islice = edict()
+        islice.t = slice(0,15)
+        islice.h = slice(0,-1)
+        islice.w = slice(0,-1)
+        islice.h = slice(256,256+96)
+        islice.w = slice(256,256+96)
+        islice = None
+
+        if not(islice is None):
+            clean = clean[islice.t,:,islice.h,islice.w]
+            noisy = noisy[islice.t,:,islice.h,islice.w]
+        print("[sliced] clean.shape: ",clean.shape)
+
         if opt.clipped_noise:
             noisy = torch.clamp(noisy, min=0, max=1)
         if opt.gpuid >= 0:
@@ -160,7 +175,7 @@ def process_video_set_func():
 
         # -- denoise burst --
         deno,basic,time = denoise(noisy, opt.sigma, opt.clipped_noise,
-                                  opt.gpuid, opt.silent, model)
+                                  opt.gpuid, opt.silent, model, islice)
 
         # -- psnrs --
         deno_psnr = compute_psnrs(deno,clean)

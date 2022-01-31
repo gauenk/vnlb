@@ -1,5 +1,6 @@
 
 # -- python deps --
+from tqdm import tqdm
 import copy,math
 import torch
 import torch as th
@@ -68,7 +69,7 @@ def processNLBayes(noisy,basic,sigma,step,flows,params,gpuid=0,clean=None):
     shape = noisy.shape
     t,c,h,w = noisy.shape
     deno = th.zeros_like(noisy)
-    nstreams = int(optional(params,'nstreams',[1,1])[step])
+    nstreams = int(optional(params,'nstreams',[1,12])[step])
     # flows = edict({k:th.FloatTensor(v).to(device) for k,v in flows.items()})
 
     # -- to device flow --
@@ -180,7 +181,6 @@ def exec_step(noisy,basic,clean,deno,mask,fflow,bflow,sigma2,sigmab2,rank,
     nsearch = w_s * w_s * w_t
 
     # -- batching height and width --
-    nstreams = 1
     tsize = bsize*nstreams
     nelems = torch.sum(mask).item()
     nbatches = divUp(divUp(nelems,nstreams),bsize)
@@ -206,6 +206,7 @@ def exec_step(noisy,basic,clean,deno,mask,fflow,bflow,sigma2,sigmab2,rank,
     print("[proc] sigma: ",sigma)
 
     # -- over batches --
+    pbar = tqdm(total=nelems)
     for batch in range(nbatches):
 
         # -- break if complete --
@@ -222,6 +223,7 @@ def exec_step(noisy,basic,clean,deno,mask,fflow,bflow,sigma2,sigmab2,rank,
         flat_patches[...] = 0
 
         # -- exec search --
+        delta = 0
         access_breaks = [False,]*nstreams
         for curr_stream in range(nstreams):
 
@@ -258,9 +260,13 @@ def exec_step(noisy,basic,clean,deno,mask,fflow,bflow,sigma2,sigmab2,rank,
             prev_masked = mask.sum().item()
             update_mask_inds(mask,inds_s,chnls,cs_ptr,nkeep=nkeep)
             curr_masked = mask.sum().item()
-            delta = prev_masked - curr_masked
+            delta += prev_masked - curr_masked
             nmasked += prev_masked - curr_masked
-            print("[%d/%d]: %d" % (nmasked,nelems,delta))
+
+        # -- write message --
+        msg = "[%d/%d]: %d" % (nmasked,nelems,delta)
+        tqdm.write(msg)
+        pbar.update(delta)
 
         # ----------------------------------------------
         #
@@ -293,31 +299,21 @@ def exec_step(noisy,basic,clean,deno,mask,fflow,bflow,sigma2,sigmab2,rank,
 
         # -- compute valid bool --
         ivalid = torch.where(torch.all(inds!=-1,1))[0]
-        print("ivalid.shape: ",ivalid.shape)
         vals_v = vals[ivalid]
         inds_v = inds[ivalid]
         patchesNoisy_v = patchesNoisy[ivalid]
         patchesBasic_v = patchesBasic[ivalid]
         patchesClean_v = patchesClean[ivalid]
+        flat_patches_v = flat_patches[ivalid]
         if inds_v.shape[0] == 0:
             break
 
         # -- optional flat patch --
-        # if flat_areas:
-        #     run_flat_areas(flat_patches,patchesNoisy,gamma,sigma2)
-
-        # -- TODO: remove me!! [only use if clean case] --
-        flat_patches_v = flat_patches[ivalid]
-        # flat_patches_v[...] = 1
+        if flat_areas:
+            run_flat_areas(flat_patches_v,patchesNoisy_v,gamma,sigma2)
 
         # -- bayes denoising --
-        # delta = patchesNoisy_v - patchesBasic_v
-        # delta = torch.abs(delta)
-        # delta = torch.sum(delta).item()
-        # print("delta: %2.3f" % delta)
         inds_i = inds_v if use_weights else None
-        # patchesNoisy_v_og = patchesNoisy_v.clone()
-
         rank_var = bayes_estimate_batch(patchesNoisy_v,patchesBasic_v,None,
                                         sigma2,sigmab2,rank,group_chnls,thresh,
                                         step==1,flat_patches_v,cs,cs_ptr,
@@ -332,17 +328,19 @@ def exec_step(noisy,basic,clean,deno,mask,fflow,bflow,sigma2,sigmab2,rank,
 
         # -- wait for all streams --
         torch.cuda.synchronize()
+        torch.cuda.empty_cache()
 
         # -- break if complete --
         if any(access_breaks): break
-        # if (nelems - nmasked) < 50:
-        #     print("breaking early: the last 50 pixels don't matter. :P")
-        #     break
 
     # -- reweight --
     weights = repeat(weights,'t h w -> t c h w',c=chnls)
     index = torch.nonzero(weights,as_tuple=True)
     deno[index] /= weights[index]
+
+    # -- fill zeros with basic --
+    index = torch.nonzero(weights==0,as_tuple=True)
+    deno[index] = basic[index]
 
     # -- inspect --
     # weights = weights.ravel().cpu()

@@ -32,8 +32,6 @@ def denoise(noisy, sigma, vid_name, clipped_noise, gpuid, silent,
     # -- proc nn --
     #
 
-    # model = load_nn_model(model,sigma,gpuid)
-
     # -- denoise with model --
     basic = proc_nn(noisy,sigma,vid_name,vid_set,deno_model)
     basic = basic.to(noisy.device)
@@ -49,7 +47,6 @@ def denoise(noisy, sigma, vid_name, clipped_noise, gpuid, silent,
     # -- format v basic --
     vbasic = basic.clone()
     vbasic = vbasic*255
-    # vbasic = vbasic.clamp(0,255).type(th.uint8)
     vbasic = vbasic.type(th.float)
 
     # -- setup vnlb inputs --
@@ -62,11 +59,6 @@ def denoise(noisy, sigma, vid_name, clipped_noise, gpuid, silent,
     # -- exec vnlb --
     proc_nl(images,flows,args)
     deno = images['deno']/255.
-
-    # import svnlb.gpu as svnlb_gpu
-    # res = svnlb_gpu.processNLBayes(images.noisy,images.basic,
-    #                                sigma,step,flows,params,gpuid=0)
-    # deno = res['denoised']/255.
 
     # -- alpha ave --
     alpha = 0.25

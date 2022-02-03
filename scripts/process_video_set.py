@@ -155,11 +155,11 @@ def process_video_set_func():
 
         # -- set islice --
         islice = edict()
-        islice.t = slice(0,10)
+        islice.t = slice(0,5)
         islice.h = slice(0,-1)
         islice.w = slice(0,-1)
-        islice.h = slice(256,256+96)
-        islice.w = slice(256,256+96)
+        islice.h = slice(256,256+128)
+        islice.w = slice(256,256+128)
         # islice = None
 
         if not(islice is None):
@@ -196,6 +196,8 @@ def process_video_set_func():
         print('-' * 80)
         print('')
         sys.stdout.flush()
+
+        save_jpg(opt,"tmp",noisy,basic,deno)
 
         if opt.save_jpg:
             save_jpg(opt,vid_name,noisy,basic,deno)

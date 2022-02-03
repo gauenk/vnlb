@@ -60,9 +60,13 @@ def denoise(noisy, sigma, vid_name, clipped_noise, gpuid, silent,
     images = alloc.allocate_images(noisy*255.,vbasic,clean)
 
     # -- exec vnlb --
-    print(args.nstreams,args.bsize)
     proc_nl(images,flows,args)
     deno = images['deno']/255.
+
+    # import svnlb.gpu as svnlb_gpu
+    # res = svnlb_gpu.processNLBayes(images.noisy,images.basic,
+    #                                sigma,step,flows,params,gpuid=0)
+    # deno = res['denoised']/255.
 
     # -- alpha ave --
     alpha = 0.25

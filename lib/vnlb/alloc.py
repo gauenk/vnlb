@@ -54,6 +54,7 @@ def allocate_images(noisy,basic,clean):
 
     # -- names --
     imgs.patch_images = ["noisy","basic","clean"]
+    imgs.ikeys = ["noisy","basic","clean","deno"]
 
     return imgs
 

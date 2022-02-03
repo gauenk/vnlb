@@ -45,10 +45,18 @@ def computeAggregation(deno,group,indices,weights,mask,nSimP,params=None,step=0)
     return results
 
 def agg_patches(patches,images,bufs,args,cs_ptr=None):
+
+    # -- default stream --
     if cs_ptr is None:
         cs_ptr = torch.cuda.default_stream().cuda_stream
-    return compute_agg_batch(images.deno,patches.noisy,bufs.inds,
-                             images.weights,args.ps,args.ps_t,cs_ptr)
+
+    # -- filter by valid --
+    valid = torch.where(torch.all(bufs.inds!=-1,1))
+    vnoisy = patches.noisy[valid]
+    vinds = bufs.inds[valid]
+
+    return compute_agg_batch(images.deno,vnoisy,vinds,images.weights,
+                             args.ps,args.ps_t,cs_ptr)
 
 def compute_agg_batch(deno,patches,inds,weights,ps,ps_t,cs_ptr):
 

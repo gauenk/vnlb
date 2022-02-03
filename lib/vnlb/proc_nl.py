@@ -19,6 +19,7 @@ import vnlb.alloc as alloc
 import vnlb.search_mask as search_mask
 import vnlb.search as search
 import vnlb.deno as deno
+import vnlb.utils as utils
 from vnlb.utils import update_flat_patch
 from vnlb.utils import idx2coords,coords2idx,patches2groups,groups2patches
 
@@ -45,14 +46,17 @@ def proc_nl(images,flows,args):
 
     # -- batching params --
     nelems,nbatches = utils.batch_params(mask,args.bsize,args.nstreams)
-    nmasked = 0
+    cmasked_prev = nelems
+
+    # -- color xform --
+    utils.rgb2yuv_images(images)
 
     # -- over batches --
     pbar = tqdm(total=nelems)
     for batch in range(nbatches):
 
         # -- exec search --
-        done,delta = search.exec_search(patches,images,flows,mask,bufs,args)
+        done = search.exec_search(patches,images,flows,mask,bufs,args)
 
         # -- flat patches --
         update_flat_patch(patches,args)
@@ -67,11 +71,17 @@ def proc_nl(images,flows,args):
         torch.cuda.empty_cache()
         if done: break
 
-        # -- logging --
-        nmasked += delta
+        # -- loop update --
+        cmasked = mask.sum().item()
+        delta = cmasked_prev - cmasked
+        cmasked_prev = cmasked
+        nmasked  = nelems - cmasked
         msg = "[%d/%d]: %d" % (nmasked,nelems,delta)
         tqdm.write(msg)
         pbar.update(delta)
+
+        # -- logging --
+        # print("sum weights: ",torch.sum(images.weights).item())
 
     # -- reweight --
     weights = repeat(images.weights,'t h w -> t c h w',c=args.c)
@@ -82,6 +92,9 @@ def proc_nl(images,flows,args):
     index = torch.nonzero(weights==0,as_tuple=True)
     images.deno[index] = images.basic[index]
 
-    # -- yuv 2 rgb --
+    # -- color xform --
+    utils.yuv2rgb_images(images)
+
+    # -- synch --
     torch.cuda.synchronize()
 

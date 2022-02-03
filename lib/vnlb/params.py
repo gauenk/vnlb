@@ -37,7 +37,8 @@ def get_params(shape,sigma):
     params = svnlb.swig.setVnlbParams(shape,sigma)
     params['nSimilarPatches'][0] = 100
     params['nSimilarPatches'][1] = 60
-    params['gamma'][1] = 1.00
+    # params['gamma'][1] = 1.00
+    params['sizePatch'] = [7,7]
     # params['useWeights'] = [False,False]
     # params['simPatchRefineKeep'] = [100,100]
     # params['cleanSearch'] = [True,True]
@@ -136,13 +137,6 @@ def get_args(params,c,step,device):
         @property
         def step_s(self): return self.procStep
         @property
-        def nstreams(self):
-            return optional(self,"nstreams",[1,12][step])
-        @property
-        def offset(self):
-            value = [2*(args.sigma/255.)**2,0.][step]
-            return optional(self,"offset",value)
-        @property
         def patch_shape(self):
             return get_patch_shape(self)
         @property
@@ -150,11 +144,12 @@ def get_args(params,c,step,device):
             return get_bufs_shape(self)
 
     # -- optional --
+    offsets = [2*(params.sigma[0]/255.)**2,0.]
     params.step = [0,1]
-    params['c'] = [c,c]
-    params.nstreams = optional(params,'nstreams',[1,12])
-    params.nkeep = optional(params,'simPatchRefineKeep',[-1,-1])
-    params.offset = optional(params,'offset',[2*(params.sigma[0]/255.)**2,0.])
+    params.c = [c,c]
+    params.nstreams = [int(x) for x in optional(params,'nstreams',[1,18])]
+    params.nkeep = [int(x) for x in optional(params,'simPatchRefineKeep',[-1,-1])]
+    params.offset = [float(x) for x in optional(params,'offset',offsets)]
     params.bsize = [int(x) for x in optional(params,'bsize_s',[128,128])]
     params.nfilter = [int(x) for x in optional(params,'nfilter',[-1,-1])]
     params.mod_sel = ["clipped","clipped"]

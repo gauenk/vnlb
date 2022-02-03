@@ -34,6 +34,31 @@ def read_video_sequence(folder_name, max_frame_num, file_ext):
 
     return vid
 
+"""
+
+Saving computed images
+
+"""
+
+def save_image(image_to_save, folder_name, image_name):
+    image_to_save = float_tensor_to_np_uint8(image_to_save)
+    image_to_save = cv2.cvtColor(image_to_save, cv2.COLOR_RGB2BGR)
+    fn = folder_name + image_name
+    print("image: ",fn)
+    cv2.imwrite(fn, image_to_save)
+
+def save_numpy(image_to_save, folder_name, image_name):
+    img = image_to_save.cpu().numpy()
+    fn = folder_name + image_name
+    print("numpy: ",fn)
+    np.save(fn,img)
+
+def float_tensor_to_np_uint8(im_in):
+    im_out = im_in.clone().clamp(0, 1).cpu()
+    im_out = im_out.permute(1, 2, 0)
+    im_out = np.round(im_out.numpy() * 255)
+    im_out = im_out.astype(np.uint8)
+    return im_out
 
 """
 
@@ -74,17 +99,19 @@ Video-IO for PaCNet Sequences
 
 """
 
-def read_pacnet_noisy_sequence(vid_name,vid_set,sigma,nframes=85):
-    return read_pacnet_sequence(vid_name,vid_set,sigma,"noisy",nframes)
+def read_pacnet_noisy_sequence(vid_set,vid_name,sigma,nframes=85):
+    return read_pacnet_sequence(vid_set,vid_name,sigma,"noisy",nframes)
 
-def read_pacnet_denoised_sequence(vid_name,vid_set,sigma,nframes=85):
-    return read_pacnet_sequence(vid_name,vid_set,sigma,"denoised",nframes)
+def read_pacnet_denoised_sequence(vid_set,vid_name,sigma,nframes=85):
+    return read_pacnet_sequence(vid_set,vid_name,sigma,"denoised",nframes)
 
-def read_pacnet_sequence(vid_name,vid_set,sigma,itype,nframes=85):
+def read_pacnet_sequence(vid_set,vid_name,sigma,itype,nframes=85):
+
     # [vid_set] currently unused.
     path = Path("/home/gauenk/Documents/packages/")
     path = path / "PaCNet-denoiser/output/videos/jpg_sequences/set/"
     path = path / f"{itype}_{sigma}" / vid_name
+    print(path)
     assert path.exists()
 
     # -- load video --

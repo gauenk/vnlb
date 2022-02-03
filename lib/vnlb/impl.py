@@ -20,8 +20,7 @@ from .proc_nl import proc_nl
 from .params import get_args,get_params
 from .utils import Timer
 
-
-def denoise(noisy, sigma, vid_name, clipped_noise, gpuid, silent,
+def denoise(noisy, sigma, alpha, vid_name, clipped_noise, gpuid, silent,
             vid_set="set8", deno_model="pacnet", islice=None, clean=None):
 
     # -- timing --
@@ -33,38 +32,37 @@ def denoise(noisy, sigma, vid_name, clipped_noise, gpuid, silent,
     #
 
     # -- denoise with model --
-    basic = proc_nn(noisy,sigma,vid_name,vid_set,deno_model)
-    basic = basic.to(noisy.device)
+    deno_nn = proc_nn(deno_model,vid_set,vid_name,sigma)
+    deno_nn = deno_nn.to(noisy.device)
 
     # -- optional slice --
     if not(islice is None):
-        basic = basic[islice.t,:,islice.h,islice.w]
+        deno_nn = deno_nn[islice.t,:,islice.h,islice.w]
 
     #
     # -- proc nl --
     #
 
     # -- format v basic --
-    vbasic = basic.clone()
-    vbasic = vbasic*255
-    vbasic = vbasic.type(th.float)
+    basic = deno_nn.clone()
+    basic = basic*255
+    basic = basic.type(th.float)
 
     # -- setup vnlb inputs --
     c = noisy.shape[1]
     params = get_params(noisy.shape,sigma)
     args = get_args(params,c,1,noisy.device)
     flows = alloc.allocate_flows(noisy.shape,noisy.device)
-    images = alloc.allocate_images(noisy*255.,vbasic,clean)
+    images = alloc.allocate_images(noisy*255.,basic,clean)
 
     # -- exec vnlb --
     proc_nl(images,flows,args)
-    deno = images['deno']/255.
+    deno_nl = images['deno']/255.
 
     # -- alpha ave --
-    alpha = 0.25
-    deno = alpha * deno + (1 - alpha) * basic
+    deno_final = alpha * deno_nl + (1 - alpha) * deno_nn
 
     # -- timeit --
     tdelta = clock.toc()
 
-    return deno,basic,tdelta
+    return deno_final,deno_nl,deno_nn,tdelta

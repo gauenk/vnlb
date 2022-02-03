@@ -1,4 +1,4 @@
-
+# -- python imports --
 import sys,os
 import cv2
 import argparse
@@ -19,29 +19,10 @@ from vnlb import denoise
 from vnlb.utils import Logger
 from vnlb.utils import read_video_sequence,read_pacnet_noisy_sequence
 # from vnlb.nn_arch import load_nn_model
+from vnlb.utils.video_io import save_image,save_numpy
+from vnlb.utils.metrics import compute_psnrs
 
-def save_numpy(image_to_save, folder_name, image_name):
-    img = image_to_save.cpu().numpy()
-    fn = folder_name + image_name
-    np.save(fn,img)
-
-def save_image(image_to_save, folder_name, image_name):
-    image_to_save = float_tensor_to_np_uint8(image_to_save)
-    image_to_save = cv2.cvtColor(image_to_save, cv2.COLOR_RGB2BGR)
-    cv2.imwrite(folder_name + image_name, image_to_save)
-
-def float_tensor_to_np_uint8(im_in):
-    im_out = im_in.clamp(0, 1).clone().cpu()
-    im_out = im_out.permute(1, 2, 0)
-    im_out = np.round(im_out.numpy() * 255)
-    im_out = im_out.astype(np.uint8)
-    return im_out
-
-def compute_psnrs(deno,clean):
-    return -10 * torch.log10(((deno - clean) ** 2).mean(dim=(-3, -2, -1), keepdim=False))
-
-def save_jpg(opt,vid_name,noisy,basic,deno):
-
+def save_jpg(opt,vid_name,save_images):
     # -- setup --
     clip_str = 'clip_' if opt.clipped_noise else ''
 
@@ -54,64 +35,37 @@ def save_jpg(opt,vid_name,noisy,basic,deno):
     if not jpg_folder.exists():
         jpg_folder.mkdir(parents=True)
 
-    # -- noisy --
-    noisy_folder_jpg = opt.jpg_out_folder + '/noisy_{}{}/'.format(clip_str, opt.sigma)
-    if not os.path.exists(noisy_folder_jpg):
-        os.mkdir(noisy_folder_jpg)
+    # -- each save image --
+    for iname in save_images:
 
-    # -- basic --
-    basic_folder_jpg = opt.jpg_out_folder
-    basic_folder_jpg += '/basic_{}{}/'.format(clip_str, opt.sigma)
-    if not os.path.exists(basic_folder_jpg):
-        os.mkdir(basic_folder_jpg)
+        # -- get image --
+        image = save_images[iname]
+        nframes = images.shape[0]
 
-    # -- denoised --
-    deno_folder_jpg = opt.jpg_out_folder
-    deno_folder_jpg += '/deno_{}{}/'.format(clip_str, opt.sigma)
-    if not os.path.exists(deno_folder_jpg):
-        os.mkdir(deno_folder_jpg)
+        # -- path --
+        folder_jpg = jpg_folder / ('%s' % opt.vid_set)
+        folder_jpg = folder_jpg / ('%s_%s%d' % (iname,clip_str,sigma))
+        if not(folder_jpg.exits()):
+            folder_jpg.mkdir(parents=True)
+        print(folder_jpg)
 
-    #
-    # -- clean old folders --
-    #
+        folder_jpg /= vid_name
+        if folder_jpg.exists():
+            shutil.rmtree(str(folder_jpg))
+        folder_jpg.mkdir()
 
-    # -- noisy --
-    noisy_sequence_folder = noisy_folder_jpg + vid_name + '/'
-    if os.path.exists(noisy_sequence_folder):
-        shutil.rmtree(noisy_sequence_folder)
-    os.mkdir(noisy_sequence_folder)
+        print(folder_jpg)
+        for t in range(nframes):
+            fid = '{:05}.jpg'.format(t)
+            save_image(image[t, ...],str(folder_jpg),fid)
+            fid = '{:05}.npy'.format(t)
+            save_numpy(image[t, ...],str(folder_jpg),fid)
 
-    # -- basic --
-    basic_sequence_folder = basic_folder_jpg + vid_name + '/'
-    if os.path.exists(basic_sequence_folder):
-        shutil.rmtree(basic_sequence_folder)
-    os.mkdir(basic_sequence_folder)
-
-    # -- deno --
-    deno_sequence_folder = deno_folder_jpg + vid_name + '/'
-    if os.path.exists(deno_sequence_folder):
-        shutil.rmtree(deno_sequence_folder)
-    os.mkdir(deno_sequence_folder)
-
-    # -- save --
-    for i in range(deno.shape[0]):
-        save_image(noisy[i, ...],
-                   noisy_sequence_folder, '{:05}.jpg'.format(i))
-        save_numpy(noisy[i, ...],
-                   noisy_sequence_folder, '{:05}.npy'.format(i))
-        save_image(basic[i,...],
-                   basic_sequence_folder,'{:05}.jpg'.format(i))
-        save_numpy(basic[i,...],
-                   basic_sequence_folder,'{:05}.npy'.format(i))
-        save_image(deno[i,...],
-                   deno_sequence_folder, '{:05}.jpg'.format(i))
-        save_numpy(deno[i,...],
-                   deno_sequence_folder, '{:05}.npy'.format(i))
-
-# Description:
-# Denoising a benchmark set of video sequences
-# from PaCNet github
 def process_video_set_func():
+    """
+    Denoise all frames from a video set!
+
+    """
     opt = parse_options()
 
     torch.manual_seed(opt.seed)
@@ -124,12 +78,14 @@ def process_video_set_func():
         opt.device = 'cpu'
 
     clip_str = 'clip_' if opt.clipped_noise else ''
-    sys.stdout = Logger('./logs/process_video_set_{}{}_log.txt'.format(clip_str, opt.sigma))
+    log_fn = './logs/process_video_set_{}{}_log.txt'.format(clip_str,opt.sigma)
+    sys.stdout = Logger(log_fn)
 
     video_names = sorted(os.listdir(opt.in_folder))
     # video_names = ["salsa"]#sorted(os.listdir(opt.in_folder))
     deno_psnr_list = list()
-    basic_psnr_list = list()
+    nn_psnr_list = list()
+    nl_psnr_list = list()
     # model = load_nn_model(opt.sigma,opt.device)
     # model = "salsa"
 
@@ -150,7 +106,7 @@ def process_video_set_func():
 
         # -- load noisy from pacnet --
         nframes = clean.shape[0]
-        noisy = read_pacnet_noisy_sequence(vid_name, opt.vid_set, opt.sigma, nframes)
+        noisy = read_pacnet_noisy_sequence(opt.vid_set, vid_name, opt.sigma, nframes)
         # noisy = clean + (opt.sigma / 255) * torch.randn_like(clean)
 
         # -- set islice --
@@ -158,9 +114,9 @@ def process_video_set_func():
         islice.t = slice(0,5)
         islice.h = slice(0,-1)
         islice.w = slice(0,-1)
-        islice.h = slice(256,256+128)
-        islice.w = slice(256,256+128)
-        islice = None
+        islice.h = slice(256,256+64)
+        islice.w = slice(256,256+64)
+        # islice = None
 
         if not(islice is None):
             clean = clean[islice.t,:,islice.h,islice.w]
@@ -174,33 +130,36 @@ def process_video_set_func():
             noisy = noisy.to(opt.gpuid)
 
         # -- denoise burst --
-        deno,basic,time = denoise(noisy, opt.sigma, vid_name, opt.clipped_noise,
-                                  opt.gpuid, opt.silent, opt.vid_set,
-                                  opt.deno_model, islice)
+        output = denoise(noisy, opt.sigma, opt.alpha, vid_name, opt.clipped_noise,
+                         opt.gpuid, opt.silent, opt.vid_set, opt.deno_model, islice)
+        deno,deno_nl,deno_nn,tdelta = output
 
         # -- psnrs --
         deno_psnr = compute_psnrs(deno,clean)
-        basic_psnr = compute_psnrs(basic,clean)
+        nl_psnr = compute_psnrs(deno_nl,clean)
+        nn_psnr = compute_psnrs(deno_nn,clean)
         deno_psnr_list.append(deno_psnr.mean().item())
-        basic_psnr_list.append(basic_psnr.mean().item())
+        nl_psnr_list.append(nl_psnr.mean().item())
+        nn_psnr_list.append(nn_psnr.mean().item())
+
 
         # -- logging --
         print('')
         print('-' * 80)
-        basic_mpsnr = basic_psnr.mean()
-        deno_mpsnr = deno_psnr.mean()
+        nn_mp = nn_psnr.mean()
+        nl_mp = nl_psnr.mean()
+        deno_mp = deno_psnr.mean()
         msg = '[{}/{}: {} done] '.format(i + 1,len(video_names),vid_name.upper())
-        msg += 'basic: {:.2f}, deno: {:.2f}, '.format(basic_mpsnr,deno_mpsnr)
-        msg += "time: {:.2f} ({:.2f} per frame)".format(time, time / clean.shape[1])
+        msg += 'nn: {:.2f}, nl: {:.2f}, deno: {:.2f}, '.format(nn_mp,nl_mp,deno_mp)
+        msg += "time: {:.2f} ({:.2f} per frame)".format(tdelta, tdelta / clean.shape[1])
         print(msg)
         print('-' * 80)
         print('')
         sys.stdout.flush()
 
-        save_jpg(opt,"tmp",noisy,basic,deno)
-
         if opt.save_jpg:
-            save_jpg(opt,vid_name,noisy,basic,deno)
+            save_dict = {"noisy":noisy,"nn":deno_nn,"nl":deno_nl,"deno":deno}
+            save_jpg(opt,vid_name,save_dict)#noisy,deno_nn,deno_nl,deno)
 
         # if opt.save_avi:
         #     noisy_folder_avi = opt.avi_out_folder + '/noisy_{}/'.format(opt.sigma)
@@ -237,6 +196,7 @@ def process_video_set_func():
 def parse_options():
     parser = argparse.ArgumentParser()
     parser.add_argument('--vid_set', type=str, default='set8', help='name of video')
+    parser.add_argument('--alpha', type=str, default=0.25, help='interolation value')
     parser.add_argument('--deno_model', type=str, default='pacnet', help='name of cached denoised video as input')
     parser.add_argument('--file_ext', type=str, default='jpg', help='file extension: {jpg, png}')
     parser.add_argument('--jpg_out_folder', type=str, default='./output/videos/jpg_sequences/set/', \

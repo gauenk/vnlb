@@ -4,7 +4,7 @@ import torch as th
 from PIL import Image
 from einops import rearrange,repeat
 
-from vnlb.sobel import apply_sobel_filter
+from vnlb.utils.sobel import apply_sobel_filter
 
 def deno_v_basic(fid,vid_name,sigma):
     # -- root --
@@ -46,7 +46,7 @@ def deno_v_basic(fid,vid_name,sigma):
 
 
     # -- interpolate --
-    alpha = .25
+    alpha = 1.0
     deno = alpha * deno + (1 - alpha) * basic
 
     # -- only top half --

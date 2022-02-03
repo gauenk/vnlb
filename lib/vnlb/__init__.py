@@ -10,4 +10,5 @@
 # from .flat_areas import run_flat_areas
 # from .misc import patch_est_plot
 # from .patch_subset import exec_patch_subset
-from .vnlb import denoise
+# from .vnlb import denoise
+from .impl import denoise

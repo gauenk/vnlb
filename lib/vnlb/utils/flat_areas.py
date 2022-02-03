@@ -5,7 +5,15 @@ import numpy as np
 from einops import rearrange
 from easydict import EasyDict as edict
 
-def run_flat_areas(flat_patch,patches,gamma,sigma2):
+def update_flat_patch(patches,args):
+    # -- unpack --
+    gamma = args.gamma
+    sigma2 = args.sigma2
+    if args.step == 1:
+        patches.flat[...] = 0
+        exec_flat_areas(patches.flat,patches.noisy,gamma,sigma2)
+
+def exec_flat_areas(flat_patch,patches,gamma,sigma2):
     """
     Decide if the region's area is "flat"
     """

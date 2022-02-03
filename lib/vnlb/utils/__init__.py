@@ -10,6 +10,9 @@ from .image_utils import apply_color_xform,numpy_div0
 from .flow_utils import flow2burst,flow2img
 
 from .sim_utils import patch_at_index,patches_at_indices
-from .logger import Logger
+from .logger import Logger,vprint
 from .video_io import *
 from .timer import Timer
+
+from .batching import batch_params,view_batch
+from .flat_areas import update_flat_patch

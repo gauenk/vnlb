@@ -44,6 +44,12 @@ def computeAggregation(deno,group,indices,weights,mask,nSimP,params=None,step=0)
 
     return results
 
+def agg_patches(patches,images,bufs,args,cs_ptr=None):
+    if cs_ptr is None:
+        cs_ptr = torch.cuda.default_stream().cuda_stream
+    return compute_agg_batch(images.deno,patches.noisy,bufs.inds,
+                             images.weights,args.ps,args.ps_t,cs_ptr)
+
 def compute_agg_batch(deno,patches,inds,weights,ps,ps_t,cs_ptr):
 
     # -- numbify the torch tensors --
@@ -54,23 +60,12 @@ def compute_agg_batch(deno,patches,inds,weights,ps,ps_t,cs_ptr):
     cs_nba = cuda.external_stream(cs_ptr)
 
     # -- launch params --
-    # num = patches.shape[0]
-    # print("inds.shape: ",inds.shape)
-    # print("patches.shape: ",patches.shape)
     bsize,num = inds.shape
-    # bsize,bsize = patches.shape[-2:]
     threads = num
     blocks = bsize
 
     # -- launch kernel --
-    # print(deno.shape,weights.shape)
-    # print("[agg] deno: ",deno.min().item(),deno.max().item())
-    # print("[agg] weights: ",weights.min().item(),weights.max().item())
-    # exec_agg[blocks,threads,cs_nba](deno_nba,patches_nba,inds_nba,
-    #                                 weights_nba,ps,ps_t)
     exec_agg_simple(deno,patches,inds,weights,ps,ps_t)
-    # print("[agg (post)] deno: ",deno.min().item(),deno.max().item())
-    # print("[agg (post)] weights: ",weights.min().item(),weights.max().item())
 
 
 def exec_agg_simple(deno,patches,inds,weights,ps,ps_t):

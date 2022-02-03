@@ -1,7 +1,7 @@
 
 
 # -- python deps --
-import torch
+import torch as th
 import numpy as np
 from einops import rearrange
 from easydict import EasyDict as edict
@@ -10,17 +10,17 @@ from easydict import EasyDict as edict
 from numba import jit,njit,prange,cuda
 
 # -- parser for cpp --
-from svnlb.swig.vnlb.mask_parser import mask_parser
+from svnlb.swig.vnlb.mask_parser import mask_parser # TODO: remove me.
 
 def mask2inds(mask,bsize,rand=True,order=None):
-    index = torch.nonzero(mask)
+    index = th.nonzero(mask)
     if index.shape[0] == 0: return index
 
     if rand:
         # -- randomly shuffly --
         mlen = max(len(index),bsize)
         if order is None or mlen == bsize:
-            order = torch.randperm(index.shape[0])
+            order = th.randperm(index.shape[0])
         index = index[order[:bsize]]
         return index
     else:
@@ -31,12 +31,16 @@ def update_mask(mask,access,val=0):
     assert access.shape[1] == 3
     mask[access[:,0],access[:,1],access[:,2]] = val
 
-def update_mask_inds(mask,inds,chnls,cs_ptr,boost=True,val=0,nkeep=-1):
+def update_mask_inds(mask,inds,chnls,cs_ptr=None,boost=True,val=0,nkeep=-1):
 
     # -- shape --
     t,h,w = mask.shape
     bsize,num = inds.shape
     hw,chw = h*w,chnls*h*w
+
+    # -- init cs_ptr --
+    if cs_ptr is None:
+        cs_ptr = th.cuda.default_stream().cuda_stream
 
     # -- keep only to "nkeep" --
     if nkeep != -1:
@@ -45,7 +49,7 @@ def update_mask_inds(mask,inds,chnls,cs_ptr,boost=True,val=0,nkeep=-1):
 
     # -- rm "-1" inds --
     if inds.shape[0] == 0: return
-    args = torch.where(torch.all(inds != -1,1))
+    args = th.where(th.all(inds != -1,1))
     # print("A",inds.shape)
     inds = inds[args]
     # print("B",inds.shape)
@@ -53,12 +57,12 @@ def update_mask_inds(mask,inds,chnls,cs_ptr,boost=True,val=0,nkeep=-1):
     if inds.shape[0] == 0: return
 
     # -- augment inds --
-    aug_inds = torch.zeros((3,f_bsize,num),dtype=torch.int64)
+    aug_inds = th.zeros((3,f_bsize,num),dtype=th.int64)
     aug_inds = aug_inds.to(inds.device)
 
     # -- (one #) -> (three #s) --
-    tdiv = torch.div
-    tmod = torch.remainder
+    tdiv = th.div
+    tmod = th.remainder
     aug_inds[0,...] = tdiv(inds,chw,rounding_mode='floor') # inds // chw
     aug_inds[1,...] = tdiv(tmod(inds,hw),w,rounding_mode='floor') # (inds % hw) // w
     aug_inds[2,...] = tmod(inds,w)
@@ -84,20 +88,20 @@ def agg_boost(inds,t,c,h,w,cs_ptr):
 
     # -- deltas --
     deltas = [[0,0,0],[0,0,-1],[0,0,1],[0,1,0],[0,-1,0]]
-    deltas = torch.IntTensor(deltas).to(inds.device)
+    deltas = th.IntTensor(deltas).to(inds.device)
 
     # -- create var --
     aggMult = len(deltas)
     B,three = inds.shape
-    agg = -torch.ones(B,aggMult,3,dtype=torch.int64).to(inds.device)
+    agg = -th.ones(B,aggMult,3,dtype=th.int64).to(inds.device)
 
     # -- launch --
     agg_boost_launcher(agg,inds,deltas,t,c,h,w,cs_ptr)
 
     # -- remove "-1" --
     agg = rearrange(agg,'b four three -> (b four) three')
-    check = torch.all(agg != -1,1)
-    args = torch.where(check)[0]
+    check = th.all(agg != -1,1)
+    args = th.where(check)[0]
     agg = agg[args]
 
     return agg
@@ -164,7 +168,24 @@ def agg_boost_cuda(agg,inds,deltas,wpt,t,c,h,w):
             agg[idx,d,2] = mW if valid else -1
 
 
-def initMask(shape,vnlb_params,step=0,info=None):
+def init_mask(shape,in_params,info=None):
+
+    # -- parse inputs --
+    t,c,h,w = shape
+    mask = np.zeros((t,h,w),dtype=np.int8)
+    mask_params = mask_parser(mask,in_params,info)
+    params = comp_params(mask_params,t,h,w)
+
+    # -- exec --
+    ngroups = fill_mask_launcher(mask,params)
+
+    # -- format results --
+    mask = th.from_numpy(mask).to(in_params.device)
+
+    return mask,ngroups
+
+
+def init_mask_old(shape,vnlb_params,step=0,info=None):
 
     # -- parse inputs --
     t,c,h,w = shape

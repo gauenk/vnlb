@@ -111,7 +111,6 @@ def read_pacnet_sequence(vid_set,vid_name,sigma,itype,nframes=85):
     path = Path("/home/gauenk/Documents/packages/")
     path = path / "PaCNet-denoiser/output/videos/jpg_sequences/set/"
     path = path / f"{itype}_{sigma}" / vid_name
-    print(path)
     assert path.exists()
 
     # -- load video --

@@ -40,25 +40,26 @@ def save_jpg(opt,vid_name,save_images):
 
         # -- get image --
         image = save_images[iname]
-        nframes = images.shape[0]
+        nframes = image.shape[0]
 
         # -- path --
         folder_jpg = jpg_folder / ('%s' % opt.vid_set)
-        folder_jpg = folder_jpg / ('%s_%s%d' % (iname,clip_str,sigma))
-        if not(folder_jpg.exits()):
+        folder_jpg /= '%s_%s%d' % (iname,clip_str,opt.sigma)
+        if not(folder_jpg.exists()):
             folder_jpg.mkdir(parents=True)
         print(folder_jpg)
 
+        # -- video name --
         folder_jpg /= vid_name
+        if iname == "deno": folder_jpg /= "alpha_%d" % (int(opt.alpha*100))
         if folder_jpg.exists():
             shutil.rmtree(str(folder_jpg))
-        folder_jpg.mkdir()
+        folder_jpg.mkdir(parents=True)
 
-        print(folder_jpg)
         for t in range(nframes):
-            fid = '{:05}.jpg'.format(t)
+            fid = '/{:05}.jpg'.format(t)
             save_image(image[t, ...],str(folder_jpg),fid)
-            fid = '{:05}.npy'.format(t)
+            fid = '/{:05}.npy'.format(t)
             save_numpy(image[t, ...],str(folder_jpg),fid)
 
 def process_video_set_func():
@@ -86,18 +87,11 @@ def process_video_set_func():
     deno_psnr_list = list()
     nn_psnr_list = list()
     nl_psnr_list = list()
-    # model = load_nn_model(opt.sigma,opt.device)
-    # model = "salsa"
 
     for i in range(len(video_names)):
-        vid_name = video_names[i]
-        if vid_name != "park_joy": continue
-        # if vid_name == "salsa":
-        #     basic_psnr_list.append(30.40)
-        #     deno_psnr_list.append(30.80)
-        #     continue
 
         # -- name model --
+        vid_name = video_names[i]
         vid_folder = opt.in_folder + '{}/'.format(vid_name)
 
         # -- load clean seq --
@@ -145,7 +139,7 @@ def process_video_set_func():
 
         # -- logging --
         print('')
-        print('-' * 80)
+        print('-' * 90)
         nn_mp = nn_psnr.mean()
         nl_mp = nl_psnr.mean()
         deno_mp = deno_psnr.mean()
@@ -153,13 +147,14 @@ def process_video_set_func():
         msg += 'nn: {:.2f}, nl: {:.2f}, deno: {:.2f}, '.format(nn_mp,nl_mp,deno_mp)
         msg += "time: {:.2f} ({:.2f} per frame)".format(tdelta, tdelta / clean.shape[1])
         print(msg)
-        print('-' * 80)
+        print('-' * 90)
         print('')
         sys.stdout.flush()
 
         if opt.save_jpg:
             save_dict = {"noisy":noisy,"nn":deno_nn,"nl":deno_nl,"deno":deno}
-            save_jpg(opt,vid_name,save_dict)#noisy,deno_nn,deno_nl,deno)
+            save_vid_name = vid_name + "_test"
+            save_jpg(opt,save_vid_name,save_dict)#noisy,deno_nn,deno_nl,deno)
 
         # if opt.save_avi:
         #     noisy_folder_avi = opt.avi_out_folder + '/noisy_{}/'.format(opt.sigma)
@@ -174,14 +169,15 @@ def process_video_set_func():
         #     save_video_avi(denoised_vid_t, denoised_folder_avi, vid_name)
 
     print('')
-    print('-' * 60)
-    print('Denoising a set with sigma {} done, deno psnr: {:.2f}, basic psnr: {:.2f}'.\
+    print('-' * 90)
+    print('[sigma {}, alpha {:.2f}] deno: {:.2f}, nl: {:.2f}, nn : {:.2f}'.\
         format(opt.sigma,
                np.array(deno_psnr_list).mean(),
-               np.array(basic_psnr_list).mean()
+               np.array(nl_psnr_list).mean(),
+               np.array(nn_psnr_list).mean()
         )
     )
-    print('-' * 60)
+    print('-' * 90)
     print('')
     sys.stdout.flush()
 

@@ -74,7 +74,7 @@ def proc_nl(images,flows,args):
         pbar.update(delta)
 
     # -- reweight --
-    weights = repeat(images.weights,'t h w -> t c h w',c=chnls)
+    weights = repeat(images.weights,'t h w -> t c h w',c=args.c)
     index = torch.nonzero(weights,as_tuple=True)
     images.deno[index] /= weights[index]
 

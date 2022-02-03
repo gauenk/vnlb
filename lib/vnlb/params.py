@@ -155,7 +155,7 @@ def get_args(params,c,step,device):
     params.nstreams = optional(params,'nstreams',[1,12])
     params.nkeep = optional(params,'simPatchRefineKeep',[-1,-1])
     params.offset = optional(params,'offset',[2*(params.sigma[0]/255.)**2,0.])
-    params.bsize = [int(x) for x in optional(params,'bsize_s',[32,32])]
+    params.bsize = [int(x) for x in optional(params,'bsize_s',[128,128])]
     params.nfilter = [int(x) for x in optional(params,'nfilter',[-1,-1])]
     params.mod_sel = ["clipped","clipped"]
     params.device = [device,device]

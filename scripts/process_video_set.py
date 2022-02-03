@@ -135,13 +135,13 @@ def process_video_set_func():
 
     for i in range(len(video_names)):
         vid_name = video_names[i]
+        if vid_name != "park_joy": continue
         # if vid_name == "salsa":
         #     basic_psnr_list.append(30.40)
         #     deno_psnr_list.append(30.80)
         #     continue
 
         # -- name model --
-        model = vid_name
         vid_folder = opt.in_folder + '{}/'.format(vid_name)
 
         # -- load clean seq --
@@ -150,17 +150,17 @@ def process_video_set_func():
 
         # -- load noisy from pacnet --
         nframes = clean.shape[0]
-        noisy = read_pacnet_noisy_sequence(vid_name, opt.sigma, nframes)
+        noisy = read_pacnet_noisy_sequence(vid_name, opt.vid_set, opt.sigma, nframes)
         # noisy = clean + (opt.sigma / 255) * torch.randn_like(clean)
 
         # -- set islice --
         islice = edict()
-        islice.t = slice(0,15)
+        islice.t = slice(0,10)
         islice.h = slice(0,-1)
         islice.w = slice(0,-1)
         islice.h = slice(256,256+96)
         islice.w = slice(256,256+96)
-        islice = None
+        # islice = None
 
         if not(islice is None):
             clean = clean[islice.t,:,islice.h,islice.w]
@@ -174,8 +174,9 @@ def process_video_set_func():
             noisy = noisy.to(opt.gpuid)
 
         # -- denoise burst --
-        deno,basic,time = denoise(noisy, opt.sigma, opt.clipped_noise,
-                                  opt.gpuid, opt.silent, model, islice)
+        deno,basic,time = denoise(noisy, opt.sigma, vid_name, opt.clipped_noise,
+                                  opt.gpuid, opt.silent, opt.vid_set,
+                                  opt.deno_model, islice)
 
         # -- psnrs --
         deno_psnr = compute_psnrs(deno,clean)
@@ -233,14 +234,14 @@ def process_video_set_func():
 # opt - options
 def parse_options():
     parser = argparse.ArgumentParser()
-
-    parser.add_argument('--in_folder', type=str, default='./data/set8/images/', help='path to the input folder')
+    parser.add_argument('--vid_set', type=str, default='set8', help='name of video')
+    parser.add_argument('--deno_model', type=str, default='pacnet', help='name of cached denoised video as input')
     parser.add_argument('--file_ext', type=str, default='jpg', help='file extension: {jpg, png}')
     parser.add_argument('--jpg_out_folder', type=str, default='./output/videos/jpg_sequences/set/', \
         help='path to the output folder for JPG frames')
     parser.add_argument('--avi_out_folder', type=str, default='./output/videos/avi_files/set/', \
         help='path to the output folder for AVI files')
-    parser.add_argument('--sigma', type=int, default=20, help='noise sigma')
+    parser.add_argument('--sigma', type=int, default=30, help='noise sigma')
     parser.add_argument('--seed', type=int, default=0, help='random seed')
     parser.add_argument('--clipped_noise', type=int, default=0, help='0: AWGN, 1: clipped Gaussian noise')
     parser.add_argument('--gpuid', type=int, default=0,
@@ -251,6 +252,14 @@ def parse_options():
     parser.add_argument('--max_frame_num', type=int, default=85, help='maximum number of frames')
 
     opt = parser.parse_args()
+
+    # -- set infolder --
+    if opt.vid_set == "set8":
+        opt.in_folder = "./data/set8/images/"
+    elif opt.vid_set == "davis":
+        opt.in_folder = "./data/davis/"
+    else:
+        raise ValueError(f"Uknown video set [{opt.vid_set}]")
 
     return opt
 

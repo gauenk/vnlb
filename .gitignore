@@ -8,6 +8,8 @@ __pycache__/
 \#*
 \.\#*
 pyvnlb/python/swigpyvnlb_avx2.swig
+lib/*egg-info/
+*txt
 
 *.swp
 *.swo

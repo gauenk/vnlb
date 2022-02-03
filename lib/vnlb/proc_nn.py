@@ -1,14 +1,14 @@
 
 import os
-from .utils import read_pacnet_denoised_sequence
+from .utils import read_pacnet_denoised_sequence,read_udvd_denoised_sequence
 
-def proc_nn(noisy,sigma,model):
+def proc_nn(noisy,sigma,vid_name,vid_set,deno_model):
 
     # -- io exec images --
-    print(model)
-    if isinstance(model,str):
-        vid_name = model
-        return read_pacnet_denoised_sequence(vid_name,sigma)
+    if deno_model == "pacnet":
+        return read_pacnet_denoised_sequence(vid_name,vid_set,sigma)
+    elif deno_model == "udvd":
+        return read_udvd_denoised_sequence(vid_name,vid_set,sigma)
     else:
         # -- exec models --
         raise NotImplemented("")

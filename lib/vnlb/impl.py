@@ -21,8 +21,8 @@ from .params import get_args,get_params
 from .utils import Timer
 
 
-def denoise(noisy, sigma, clipped_noise, gpuid, silent,
-            model=None, islice=None, clean=None):
+def denoise(noisy, sigma, vid_name, clipped_noise, gpuid, silent,
+            vid_set="set8", deno_model="pacnet", islice=None, clean=None):
 
     # -- timing --
     clock = Timer()
@@ -35,7 +35,7 @@ def denoise(noisy, sigma, clipped_noise, gpuid, silent,
     # model = load_nn_model(model,sigma,gpuid)
 
     # -- denoise with model --
-    basic = proc_nn(noisy,sigma,model)
+    basic = proc_nn(noisy,sigma,vid_name,vid_set,deno_model)
     basic = basic.to(noisy.device)
 
     # -- optional slice --
@@ -60,6 +60,7 @@ def denoise(noisy, sigma, clipped_noise, gpuid, silent,
     images = alloc.allocate_images(noisy*255.,vbasic,clean)
 
     # -- exec vnlb --
+    print(args.nstreams,args.bsize)
     proc_nl(images,flows,args)
     deno = images['deno']/255.
 

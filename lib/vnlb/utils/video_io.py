@@ -35,16 +35,56 @@ def read_video_sequence(folder_name, max_frame_num, file_ext):
     return vid
 
 
-def read_pacnet_noisy_sequence(name,sigma,nframes=85):
-    return read_pacnet_sequence(name,sigma,"noisy",nframes)
+"""
 
-def read_pacnet_denoised_sequence(name,sigma,nframes=85):
-    return read_pacnet_sequence(name,sigma,"denoised",nframes)
+Video-IO for UDVD Sequences
 
-def read_pacnet_sequence(name,sigma,itype,nframes=85):
+
+"""
+
+def read_udvd_denoised_sequence(vid_name,vid_set,sigma,nframes=85):
+    return read_udvd_sequence(vid_name,vid_set,sigma,"denoised",nframes)
+
+def read_udvd_sequence(vid_name,vid_set,sigma,itype,nframes):
+    path = Path("/home/gauenk/Documents/packages/")
+    path = path / f"udvd/output/{vid_set}/"
+    path = path / f"{itype}_{sigma}" / vid_name
+    assert path.exists()
+
+    # -- load video --
+    vid = []
+    for t in range(nframes):
+
+        fn = path / ("%s_%05d.npy" % (itype,t))
+        if not(fn.exists()): break
+        fn = str(fn)
+
+        frame = np.load(fn)
+        vid.append(th.from_numpy(frame))
+
+    vid = th.stack(vid)
+
+    return vid
+
+
+"""
+
+Video-IO for PaCNet Sequences
+
+
+"""
+
+def read_pacnet_noisy_sequence(vid_name,vid_set,sigma,nframes=85):
+    return read_pacnet_sequence(vid_name,vid_set,sigma,"noisy",nframes)
+
+def read_pacnet_denoised_sequence(vid_name,vid_set,sigma,nframes=85):
+    return read_pacnet_sequence(vid_name,vid_set,sigma,"denoised",nframes)
+
+def read_pacnet_sequence(vid_name,vid_set,sigma,itype,nframes=85):
+    # [vid_set] currently unused.
     path = Path("/home/gauenk/Documents/packages/")
     path = path / "PaCNet-denoiser/output/videos/jpg_sequences/set/"
-    path = path / f"{itype}_{sigma}" / name
+    path = path / f"{itype}_{sigma}" / vid_name
     assert path.exists()
 
     # -- load video --

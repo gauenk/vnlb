@@ -25,7 +25,7 @@ Usage
 -----
 
 We expect the images to be shaped `(nframes,channels,height,width)` with
-pixel values in range `[0,...,255.]`. The color channels are ordered RGB. Common examples of noise levels are 10, 20 and 50. See [scripts/example.py](https://github.com/gauenk/pyvnlb/blob/master/scripts/example.py) for more details.
+pixel values in range `[0,...,255.]`. The color channels are ordered RGB. Common examples of noise levels are 10, 20 and 50. See [scripts/example.py](https://github.com/gauenk/vnlb/blob/master/scripts/example.py) for more details.
 
 ```python
 import vnlb

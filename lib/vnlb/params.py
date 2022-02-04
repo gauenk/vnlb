@@ -33,8 +33,45 @@ def not_here():
     fflow = optional(flows,'fflow',zflow)
     bflow = optional(flows,'bflow',zflow)
 
-def get_params(shape,sigma):
-    params = svnlb.swig.setVnlbParams(shape,sigma)
+def default_params(sigma):
+    params = edict()
+    params.aggreBoost = [True,True]
+    params.beta = [1.0,1.0]
+    params.bsize = [128,128]
+    params.c = [3,3]
+    params.coupleChannels = [False,False]
+    params.device = ['cpu','cpu']
+    params.flatAreas = [False,True]
+    params.gamma = [0.95, 0.95]
+    params.isFirstStep = [True,False]
+    params.mod_sel = ["clipped","clipped"]
+    params.nParts = [-1,-1]
+    params.nThreads = [-1,-1]
+    params.nSimilarPatches = [100,60]
+    params.nkeep = [-1,-1]
+    params.nstreams = [8,18]
+    params.offset = [2*(sigma/255.)**2,0.]
+    params.onlyFrame = [-1,-1]
+    params.procStep = [3,3]
+    params.rank = [39,39]
+    params.sigma = [sigma,sigma]
+    params.sigmaBasic = [0,0]
+    params.sizePatch  = [7,7]
+    params.sizePatchTime  = [2,2]
+    params.sizeSearchTimeBwd = [6,6]
+    params.sizeSearchTimeFwd = [6,6]
+    params.sizeSearchWindow = [27,27]
+    params.step = [0,1]
+    params.tau = [0,400.]
+    params.testing = [False,False]
+    params.use_imread = [False,False]
+    params.var_mode = [0,0]
+    params.variThres = [0.7,0.7]
+    params.verbose = [False,False]
+    return params
+
+def get_params(sigma):
+    params = default_params(sigma)
     params['nSimilarPatches'][0] = 100
     params['nSimilarPatches'][1] = 60
     # params['gamma'][1] = 1.00

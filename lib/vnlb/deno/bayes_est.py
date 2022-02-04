@@ -24,7 +24,11 @@ def denoise(patches,args):
     flat_pdim(patches)
 
     # -- center patches --
-    cnoisy,cbasic = center_patches(patches.noisy,patches.basic,patches.flat,args.step==1)
+    cnoisy,cbasic = center_patches(patches.noisy,patches.basic,
+                                   patches.flat,args.step==1,args.c)
+
+    # -- flatten across batch --
+    flat_bdim(patches)
 
     # -- cov --
     pinput = patches.noisy if args.step == 0 else patches.basic
@@ -39,6 +43,9 @@ def denoise(patches,args):
     # -- filter --
     filter_patches(patches.noisy,covMat,eigVals,eigVecs,args.sigma2,args.rank)
 
+    # -- expand batch and color --
+    expand_bdim(patches,args)
+
     # -- recent --
     patches.noisy[...] += cnoisy
 
@@ -47,14 +54,25 @@ def denoise(patches,args):
 
     # -- fill? --
     pnoisy[...] = patches.noisy[...]
+    return rank_var
+
+
+def flat_bdim(patches):
+    shape_str = "b c n p -> (b c) n p"
+    reshape_patches(patches,shape_str)
 
 def flat_pdim(patches):
-    shape_str = "b n pt c ph pw -> (b c) n (pt ph pw)"
+    shape_str = "b n pt c ph pw -> b c n (pt ph pw)"
     reshape_patches(patches,shape_str)
 
 def expand_pdim(patches,args):
-    shape_str = "(b c) n (pt ph pw) -> b n pt c ph pw"
-    shape_key = {'c':args.c,'ph':args.ps,'pw':args.ps}
+    shape_str = "b c n (pt ph pw) -> b n pt c ph pw"
+    shape_key = {'ph':args.ps,'pw':args.ps}
+    reshape_patches(patches,shape_str,**shape_key)
+
+def expand_bdim(patches,args):
+    shape_str = "(b c) n p -> b c n p"
+    shape_key = {'c':args.c}
     reshape_patches(patches,shape_str,**shape_key)
 
 def reshape_patches(patches,shape_str,**shape_key):
@@ -62,7 +80,7 @@ def reshape_patches(patches,shape_str,**shape_key):
         if patches[img] is None: continue
         patches[img] = rearrange(patches[img],shape_str,**shape_key)
 
-def center_patches(pnoisy,pbasic,flat_patch,step2):
+def center_patches(pnoisy,pbasic,flat_patch,step2,c):
 
     # -- center basic --
     cbasic = None

@@ -44,13 +44,11 @@ def save_image(image_to_save, folder_name, image_name):
     image_to_save = float_tensor_to_np_uint8(image_to_save)
     image_to_save = cv2.cvtColor(image_to_save, cv2.COLOR_RGB2BGR)
     fn = folder_name + image_name
-    print("image: ",fn)
     cv2.imwrite(fn, image_to_save)
 
 def save_numpy(image_to_save, folder_name, image_name):
     img = image_to_save.cpu().numpy()
     fn = folder_name + image_name
-    print("numpy: ",fn)
     np.save(fn,img)
 
 def float_tensor_to_np_uint8(im_in):

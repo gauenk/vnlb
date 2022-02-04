@@ -47,7 +47,6 @@ def save_jpg(opt,vid_name,save_images):
         folder_jpg /= '%s_%s%d' % (iname,clip_str,opt.sigma)
         if not(folder_jpg.exists()):
             folder_jpg.mkdir(parents=True)
-        print(folder_jpg)
 
         # -- video name --
         folder_jpg /= vid_name
@@ -92,6 +91,7 @@ def process_video_set_func():
 
         # -- name model --
         vid_name = video_names[i]
+        if vid_name != "park_joy": continue
         vid_folder = opt.in_folder + '{}/'.format(vid_name)
 
         # -- load clean seq --
@@ -101,16 +101,15 @@ def process_video_set_func():
         # -- load noisy from pacnet --
         nframes = clean.shape[0]
         noisy = read_pacnet_noisy_sequence(opt.vid_set, vid_name, opt.sigma, nframes)
-        # noisy = clean + (opt.sigma / 255) * torch.randn_like(clean)
 
         # -- set islice --
         islice = edict()
-        islice.t = slice(0,5)
+        islice.t = slice(0,10)
         islice.h = slice(0,-1)
         islice.w = slice(0,-1)
         islice.h = slice(256,256+64)
         islice.w = slice(256,256+64)
-        # islice = None
+        islice = None
 
         if not(islice is None):
             clean = clean[islice.t,:,islice.h,islice.w]
@@ -135,7 +134,6 @@ def process_video_set_func():
         deno_psnr_list.append(deno_psnr.mean().item())
         nl_psnr_list.append(nl_psnr.mean().item())
         nn_psnr_list.append(nn_psnr.mean().item())
-
 
         # -- logging --
         print('')
@@ -171,10 +169,8 @@ def process_video_set_func():
     print('')
     print('-' * 90)
     print('[sigma {}, alpha {:.2f}] deno: {:.2f}, nl: {:.2f}, nn : {:.2f}'.\
-        format(opt.sigma,
-               np.array(deno_psnr_list).mean(),
-               np.array(nl_psnr_list).mean(),
-               np.array(nn_psnr_list).mean()
+        format(opt.sigma,opt.alpha,np.array(deno_psnr_list).mean(),
+               np.array(nl_psnr_list).mean(),np.array(nn_psnr_list).mean()
         )
     )
     print('-' * 90)
@@ -192,7 +188,7 @@ def process_video_set_func():
 def parse_options():
     parser = argparse.ArgumentParser()
     parser.add_argument('--vid_set', type=str, default='set8', help='name of video')
-    parser.add_argument('--alpha', type=str, default=0.25, help='interolation value')
+    parser.add_argument('--alpha', type=str, default=0.20, help='interolation value')
     parser.add_argument('--deno_model', type=str, default='pacnet', help='name of cached denoised video as input')
     parser.add_argument('--file_ext', type=str, default='jpg', help='file extension: {jpg, png}')
     parser.add_argument('--jpg_out_folder', type=str, default='./output/videos/jpg_sequences/set/', \

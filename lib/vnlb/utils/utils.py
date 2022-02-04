@@ -3,7 +3,6 @@ import cv2
 import torch
 import numpy as np
 from einops import rearrange
-import svnlb
 
 
 def divUp(a,b): return (a-1)//b+1
@@ -21,12 +20,6 @@ def get_patch_shapes_from_params(params,channels):
     patch_dim = sPx * sPx * sPt * patch_dim_c
     patch_chnls = 1 if params.coupleChannels else channels
     return patch_num,patch_dim,patch_chnls
-
-def assign_swig_args(args,sargs):
-    for key,val in args.items():
-        sval = optional_swig_ptr(val)
-        setattr(sargs,key,sval)
-    return sargs
 
 def check_and_expand_flows(pyargs,t):
     fflow,bflow = pyargs['fflow'],pyargs['bflow']
@@ -126,15 +119,6 @@ def optional(pydict,key,default,dtype=None):
         rtn = np.array(rtn,dtype=dtype)
 
     return rtn
-
-def optional_swig_ptr(elem):
-    swig_xfer = isinstance(elem,np.ndarray)
-    swig_xfer = swig_xfer or isinstance(elem,str)
-    swig_xfer = swig_xfer or isinstance(elem,bytes)
-    if not swig_xfer:
-        return elem
-    # elem = np.ascontiguousarray(elem)
-    return svnlb.swig_ptr(elem)
 
 def check_flows(pyargs):
     fflow = optional(pyargs,'fflow',None)

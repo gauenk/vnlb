@@ -13,6 +13,10 @@ import warnings
 from numba import NumbaPerformanceWarning
 warnings.simplefilter('ignore', category=NumbaPerformanceWarning)
 
+# -- old exec import --
+import svnlb
+from svnlb.gpu import processNLBayes
+
 # -- project imports --
 import vnlb.alloc as alloc
 from .proc_nn import proc_nn
@@ -50,7 +54,7 @@ def denoise(noisy, sigma, alpha, vid_name, clipped_noise, gpuid, silent,
 
     # -- setup vnlb inputs --
     c = noisy.shape[1]
-    params = get_params(noisy.shape,sigma)
+    params = get_params(sigma)
     args = get_args(params,c,1,noisy.device)
     flows = alloc.allocate_flows(noisy.shape,noisy.device)
     images = alloc.allocate_images(noisy*255.,basic,clean)
@@ -58,6 +62,12 @@ def denoise(noisy, sigma, alpha, vid_name, clipped_noise, gpuid, silent,
     # -- exec vnlb --
     proc_nl(images,flows,args)
     deno_nl = images['deno']/255.
+
+    # -- [old-gpu] exec vnlb --
+    # params = svnlb.swig.setVnlbParams(noisy.shape,sigma)
+    # flows = {k:v.cpu().numpy() for k,v in flows.items()}
+    # py_results = processNLBayes(noisy,basic,sigma,1,flows,params)
+    # deno_nl = py_results['denoised']
 
     # -- alpha ave --
     deno_final = alpha * deno_nl + (1 - alpha) * deno_nn

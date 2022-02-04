@@ -1,6 +1,6 @@
 import numpy as np
 
-from svnlb.utils import patches2groups,groups2patches
+from vnlb.utils import patches2groups,groups2patches
 
 def index2indices(index,shape):
     t,c,h,w = shape

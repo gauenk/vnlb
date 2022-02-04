@@ -6,11 +6,12 @@ import numpy as np
 from einops import rearrange
 from easydict import EasyDict as edict
 
+# -- logging --
+import pprint
+pp = pprint.PrettyPrinter(indent=4)
+
 # -- numba --
 from numba import jit,njit,prange,cuda
-
-# -- parser for cpp --
-from svnlb.swig.vnlb.mask_parser import mask_parser # TODO: remove me.
 
 def mask2inds(mask,bsize,rand=True,order=None):
     index = th.nonzero(mask)
@@ -173,7 +174,7 @@ def init_mask(shape,in_params,info=None):
     # -- parse inputs --
     t,c,h,w = shape
     mask = np.zeros((t,h,w),dtype=np.int8)
-    mask_params = mask_parser(mask,in_params,info)
+    mask_params = default_mask_params(in_params,t,h,w)
     params = comp_params(mask_params,t,h,w)
 
     # -- exec --
@@ -203,6 +204,23 @@ def init_mask_old(shape,vnlb_params,step=0,info=None):
     results.ngroups = ngroups
 
     return results
+
+def default_mask_params(args,t,h,w):
+    params = edict()
+    params.origin_t = 0
+    params.origin_h = 0
+    params.origin_w = 0
+    params.ending_t = t
+    params.ending_h = h
+    params.ending_w = w
+    params.sWx = args.sizeSearchWindow
+    params.sWt = args.sizeSearchTimeBwd + args.sizeSearchTimeBwd + 1
+    params.ps = args.ps
+    params.ps_t = args.ps_t
+    params.step_t = 1
+    params.step_h = args.procStep
+    params.step_w = args.procStep
+    return params
 
 def comp_params(mask_params,t,h,w):
 

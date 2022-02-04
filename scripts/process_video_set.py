@@ -109,7 +109,7 @@ def process_video_set_func():
         islice.w = slice(0,-1)
         islice.h = slice(256,256+64)
         islice.w = slice(256,256+64)
-        islice = None
+        # islice = None
 
         if not(islice is None):
             clean = clean[islice.t,:,islice.h,islice.w]

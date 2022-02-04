@@ -13,10 +13,6 @@ import warnings
 from numba import NumbaPerformanceWarning
 warnings.simplefilter('ignore', category=NumbaPerformanceWarning)
 
-# -- old exec import --
-import svnlb
-from svnlb.gpu import processNLBayes
-
 # -- project imports --
 import vnlb.alloc as alloc
 from .proc_nn import proc_nn

@@ -59,12 +59,6 @@ def denoise(noisy, sigma, alpha, vid_name, clipped_noise, gpuid, silent,
     proc_nl(images,flows,args)
     deno_nl = images['deno']/255.
 
-    # -- [old-gpu] exec vnlb --
-    # params = svnlb.swig.setVnlbParams(noisy.shape,sigma)
-    # flows = {k:v.cpu().numpy() for k,v in flows.items()}
-    # py_results = processNLBayes(noisy,basic,sigma,1,flows,params)
-    # deno_nl = py_results['denoised']
-
     # -- alpha ave --
     deno_final = alpha * deno_nl + (1 - alpha) * deno_nn
 

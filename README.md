@@ -1,4 +1,4 @@
-Python Implementation of VNLB (Pytorch & Numba)
+Video Non-Local Bayes (VNLB)
 =========================================
 A Python Implementation for Video Non-Local Bayesian Denoising. 
 
@@ -10,7 +10,6 @@ The package is available through Python pip,
 
 ```
 $ python -m pip install vnlb --user
-
 ```
 
 Or the package can be downloaded through github,
@@ -33,7 +32,7 @@ import vnlb
 import numpy as np
 
 # -- get data --
-clean = 255.*np.random.rand(5,3,64,64)
+clean = vnlb.testing.load_dataset("davis_64x64",vnlb=False)[0]['clean'].copy()[:3]              
 # (nframes,channels,height,width)
 
 # -- add noise --
@@ -41,13 +40,16 @@ std = 20.
 noisy = np.random.normal(clean,scale=std)
 
 # -- Video Non-Local Bayes --
-result = vnlb.denoise(noisy,std)
-denoised = result['denoised']
+deno,basic,dtime = vnlb.denoise(noisy,std)
 
 # -- compute denoising quality --
-psnrs = vnlb.compute_psnrs(clean,denoised)
-print("PSNRs:")
-print(psnrs)
+deno_psnr = vnlb.utils.compute_psnrs(clean,deno)
+basic_psnr = vnlb.utils.compute_psnrs(clean,basic)
+print("Denoised PSNRs:")
+print(deno_psnrs)
+print("Basic PSNRs:")
+print(basic_psnrs)
+print("Execution Time (s): %2.2e" % dtime)
 
 ```
 

@@ -88,7 +88,7 @@ This code provides is a Python+GPU implementation of the video denoising method 
 space-time patches", Journal of Mathematical Imaging and Vision, 60(1),
 January 2018.](https://link.springer.com/article/10.1007%2Fs10851-017-0742-4)
 
-[The C++ code originally is from Pablo Arias](https://github.com/pariasm/vnlb). [A Swig-Python Wrapper of the C++ Code is available here](https://github.com/gauenk/svnlb).
+Additionally, the [origina C++ code](https://github.com/pariasm/vnlb) is from Pablo Arias. For easier interfacing, a Swig-Python Wrapper of the original C++ Code is [available here](https://github.com/gauenk/svnlb).
 
 
 LICENSE

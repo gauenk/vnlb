@@ -1,4 +1,4 @@
-Python Implementation of VNLB (Pytorch & Numba)
+Video Non-Local Bayes (VNLB)
 =========================================
 A Python Implementation for Video Non-Local Bayesian Denoising. 
 
@@ -10,7 +10,6 @@ The package is available through Python pip,
 
 ```
 $ python -m pip install vnlb --user
-
 ```
 
 Or the package can be downloaded through github,
@@ -26,14 +25,14 @@ Usage
 -----
 
 We expect the images to be shaped `(nframes,channels,height,width)` with
-pixel values in range `[0,...,255.]`. The color channels are ordered RGB. Common examples of noise levels are 10, 20 and 50. See [scripts/example.py](https://github.com/gauenk/pyvnlb/blob/master/scripts/example.py) for more details.
+pixel values in range `[0,...,255.]`. The color channels are ordered RGB. Common examples of noise levels are 10, 20 and 50. See [scripts/example.py](https://github.com/gauenk/vnlb/blob/master/scripts/example.py) for more details.
 
 ```python
 import vnlb
 import numpy as np
 
 # -- get data --
-clean = 255.*np.random.rand(5,3,64,64)
+clean = vnlb.testing.load_dataset("davis_64x64",vnlb=False)[0]['clean'].copy()[:3]              
 # (nframes,channels,height,width)
 
 # -- add noise --
@@ -41,13 +40,16 @@ std = 20.
 noisy = np.random.normal(clean,scale=std)
 
 # -- Video Non-Local Bayes --
-result = vnlb.denoise(noisy,std)
-denoised = result['denoised']
+deno,basic,dtime = vnlb.denoise(noisy,std)
 
 # -- compute denoising quality --
-psnrs = vnlb.compute_psnrs(clean,denoised)
-print("PSNRs:")
-print(psnrs)
+deno_psnr = vnlb.utils.compute_psnrs(clean,deno)
+basic_psnr = vnlb.utils.compute_psnrs(clean,basic)
+print("Denoised PSNRs:")
+print(deno_psnrs)
+print("Basic PSNRs:")
+print(basic_psnrs)
+print("Execution Time (s): %2.2e" % dtime)
 
 ```
 
@@ -86,7 +88,7 @@ This code provides is a Python+GPU implementation of the video denoising method 
 space-time patches", Journal of Mathematical Imaging and Vision, 60(1),
 January 2018.](https://link.springer.com/article/10.1007%2Fs10851-017-0742-4)
 
-[The C++ code originally is from Pablo Arias](https://github.com/pariasm/vnlb). [A Swig-Python Wrapper of the C++ Code is available here](https://github.com/gauenk/svnlb).
+Additionally, the [original C++ code](https://github.com/pariasm/vnlb) is from Pablo Arias. For easier interfacing, a Swig-Python Wrapper of the original C++ Code is [available here](https://github.com/gauenk/svnlb).
 
 
 LICENSE

@@ -1,12 +1,13 @@
 Comparing with C++ Code
 ---
 
-This code is a Python API for Video Non-Local Bayesian Denoising ([C++ code originally from Pablo Arias](https://github.com/pariasm/vnlb)). The numerical outputs from the Python API and the C++ Code are exactly equal. The Python code takes about 3 seconds longer than the C++ Code to execute.
+This code is a Python API for Video Non-Local Bayesian Denoising (VNLB). [The original C++ code](https://github.com/pariasm/vnlb) is from Pablo Arias. For easier interfacing, a Swig-Python Wrapper of the original C++ Code is [available here](https://github.com/gauenk/svnlb).
+
 
 Numerical Comparison
 ---
 
-To demonstrate this claim, we provide the `compare_cpp.py` script. We have two examples from the [C++ Code](https://github.com/pariasm/vnlb) provided in the `data/` folder. For reproducibility, details to re-create the C++ Code results are included in the [docs/VNLB.md](https://github.com/gauenk/pyvnlb/blob/master/docs/VNLB.md) file. To run the comparison with the provided C++ outputs, type:
+This package is approximately equal to the C++ implementation. To demonstrate this claim, we provide the `compare_cpp.py` script. We have two examples from the [C++ Code](https://github.com/pariasm/vnlb) provided in the `data/` folder. For reproducibility, details to re-create the C++ Code results are included in the [docs/VNLB.md](https://github.com/gauenk/pyvnlb/blob/master/docs/VNLB.md) file. To run the comparison with the provided C++ outputs, type:
 
 ```
 $ export OMP_NUM_THREADS=4

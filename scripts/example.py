@@ -5,7 +5,15 @@ Example use of VNLB for Denoising
 """
 
 import vnlb
+import torch as th
 import numpy as np
+
+# -- set seed [randomly order denoised pixels] --
+seed = 123
+np.random.seed(seed)
+th.manual_seed(seed)
+th.backends.cudnn.deterministic = True
+th.backends.cudnn.benchmark = False
 
 # -- get data --
 clean = vnlb.testing.load_dataset("davis_64x64",vnlb=False)[0]['clean'].copy()[:3]
@@ -16,7 +24,7 @@ std = 20.
 noisy = np.random.normal(clean,scale=std)
 
 # -- Video Non-Local Bayes --
-deno,basic,dtime = vnlb.denoise(noisy,std)
+deno,basic,dtime = vnlb.denoise(noisy,std,verbose=True)
 
 
 # -- Denoising Quality --

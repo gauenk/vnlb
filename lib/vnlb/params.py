@@ -32,7 +32,7 @@ def not_here():
     fflow = optional(flows,'fflow',zflow)
     bflow = optional(flows,'bflow',zflow)
 
-def default_params(sigma):
+def default_params(sigma,verbose=False):
     params = edict()
     params.aggreBoost = [True,True]
     params.beta = [1.0,1.0]
@@ -66,11 +66,11 @@ def default_params(sigma):
     params.use_imread = [False,False]
     params.var_mode = [0,0]
     params.variThres = [2.7,1.2] # 0.7
-    params.verbose = [False,False]
+    params.verbose = [verbose,verbose]
     return params
 
-def get_params(sigma):
-    params = default_params(sigma)
+def get_params(sigma,verbose=False):
+    params = default_params(sigma,verbose)
     params['nSimilarPatches'][0] = 100
     params['nSimilarPatches'][1] = 60
     # params['gamma'][1] = 1.00

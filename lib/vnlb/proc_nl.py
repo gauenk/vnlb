@@ -32,7 +32,7 @@ import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
 
-def proc_nl(images,flows,args,full_args=None):
+def proc_nl(images,flows,args):
 
     # -- init --
     # pp.pprint(args)
@@ -53,8 +53,11 @@ def proc_nl(images,flows,args,full_args=None):
     # -- color xform --
     utils.rgb2yuv_images(images)
 
+    # -- logging --
+    if args.verbose: print(f"Processing VNLB [step {args.step}]")
+
     # -- over batches --
-    pbar = tqdm(total=nelems)
+    if args.verbose: pbar = tqdm(total=nelems)
     for batch in range(nbatches):
 
         # -- exec search --
@@ -84,9 +87,10 @@ def proc_nl(images,flows,args,full_args=None):
         delta = cmasked_prev - cmasked
         cmasked_prev = cmasked
         nmasked  = nelems - cmasked
-        msg = "[%d/%d]: %d" % (nmasked,nelems,delta)
-        tqdm.write(msg)
-        pbar.update(delta)
+        msg = "[Pixels %d/%d]: %d" % (nmasked,nelems,delta)
+        if args.verbose:
+            tqdm.write(msg)
+            pbar.update(delta)
 
         # -- logging --
         # print("sum weights: ",torch.sum(images.weights).item())
@@ -96,18 +100,10 @@ def proc_nl(images,flows,args,full_args=None):
         # - terminate --
         if done: break
 
-    # -- reweight --
+    # -- reweight deno --
     weights = repeat(images.weights,'t h w -> t c h w',c=args.c)
     index = torch.nonzero(weights,as_tuple=True)
     images.deno[index] /= weights[index]
-
-    print(weights[0,0,:3,:3])
-    print(weights[0,0,-3:,-3:])
-
-    weights /= weights.max().item()
-    print(weights[0,0,:3,:3])
-    print(weights[0,0,-3:,-3:])
-    vnlb.utils.save_burst(weights, "output/example/", "mask")
 
     # -- fill zeros with basic --
     fill_img = images.basic if args.step==1 else images.noisy

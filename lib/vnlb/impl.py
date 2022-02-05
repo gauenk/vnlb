@@ -21,7 +21,7 @@ from .params import get_args,get_params
 from .utils import Timer
 
 
-def denoise(noisy, sigma, gpuid=0, clean=None):
+def denoise(noisy, sigma, gpuid=0, clean=None, verbose=True):
     """
     Video Non-Local Bayes (VNLB)
 
@@ -41,7 +41,7 @@ def denoise(noisy, sigma, gpuid=0, clean=None):
 
     # -- setup vnlb inputs --
     c = noisy.shape[1]
-    params = get_params(sigma)
+    params = get_params(sigma,verbose)
     flows = alloc.allocate_flows(noisy.shape,noisy.device)
 
     # -- [step 1] --
@@ -49,7 +49,6 @@ def denoise(noisy, sigma, gpuid=0, clean=None):
     args = get_args(params,c,0,noisy.device)
     proc_nl(images,flows,args)
     basic = images['deno'].clone()
-    print("basic.max(): ",basic.max())
 
     # -- [step 2] --
     images = alloc.allocate_images(noisy,basic,clean)

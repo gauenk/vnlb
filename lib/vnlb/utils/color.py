@@ -24,7 +24,6 @@ def yuv2rgb_cpp(burst):
     shape = burst.shape
     shape_rs = (-1,shape[-3],shape[-2],shape[-1])
     burst = burst.reshape(shape_rs)
-    print(burst.shape)
 
     # -- color convert --
     apply_yuv2rgb(burst)

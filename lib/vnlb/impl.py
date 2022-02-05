@@ -62,8 +62,8 @@ def denoise(noisy, sigma, gpuid=0, clean=None, verbose=True):
     return deno,basic,tdelta
 
 
-def deno_n3l(noisy, sigma, alpha, vid_name, clipped_noise, gpuid, silent,
-              vid_set="set8", deno_model="pacnet", islice=None, clean=None):
+def deno_n3l(noisy, sigma, alpha, vid_name, clipped_noise, gpuid, silent,vid_set="set8",
+             deno_model="pacnet", islice=None, clean=None, verbose=False):
     """
     Method submitted to ECCV 2022
 
@@ -96,7 +96,7 @@ def deno_n3l(noisy, sigma, alpha, vid_name, clipped_noise, gpuid, silent,
 
     # -- setup vnlb inputs --
     c = noisy.shape[1]
-    params = get_params(sigma)
+    params = get_params(sigma,verbose)
     args = get_args(params,c,1,noisy.device)
     flows = alloc.allocate_flows(noisy.shape,noisy.device)
     images = alloc.allocate_images(noisy*255.,basic,clean)

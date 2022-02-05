@@ -18,7 +18,7 @@ import glob
 long_description="""PyVNLB: Python implementation of Video Non-Local Bayes"""
 setup(
     name='vnlb',
-    version='1.0.0',
+    version='100.100.100',
     description='A python implementation of VNLB',
     long_description=long_description,
     url='https://github.com/gauenk/vnlb',
@@ -26,6 +26,6 @@ setup(
     author_email='gauenk@purdue.edu',
     license='MIT',
     keywords='burst denoising, non-local search, video denoising, neural network',
-    install_requires=['numpy','torch','flake8'],
+    install_requires=['numpy','torch','flake8','vpss'],
     packages=find_packages(),
 )

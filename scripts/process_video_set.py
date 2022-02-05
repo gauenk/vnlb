@@ -91,7 +91,7 @@ def process_video_set_func():
 
         # -- name model --
         vid_name = video_names[i]
-        if vid_name != "park_joy": continue
+        # if vid_name != "park_joy": continue
         vid_folder = opt.in_folder + '{}/'.format(vid_name)
 
         # -- load clean seq --
@@ -123,7 +123,8 @@ def process_video_set_func():
 
         # -- denoise burst --
         output = deno_n3l(noisy, opt.sigma, opt.alpha, vid_name, opt.clipped_noise,
-                           opt.gpuid, opt.silent, opt.vid_set, opt.deno_model, islice)
+                          opt.gpuid, opt.silent, opt.vid_set, opt.deno_model, islice,
+                          verbose=opt.verbose)
         deno,deno_nl,deno_nn,tdelta = output
 
         # -- psnrs --
@@ -150,7 +151,7 @@ def process_video_set_func():
 
         if opt.save_jpg:
             save_dict = {"noisy":noisy,"nn":deno_nn,"nl":deno_nl,"deno":deno}
-            save_vid_name = vid_name + "_test"
+            # save_vid_name = vid_name + "_test"
             save_jpg(opt,save_vid_name,save_dict)#noisy,deno_nn,deno_nl,deno)
 
         # if opt.save_avi:
@@ -188,6 +189,7 @@ def parse_options():
     parser = argparse.ArgumentParser()
     parser.add_argument('--vid_set', type=str, default='set8', help='name of video')
     parser.add_argument('--alpha', type=str, default=0.20, help='interolation value')
+    parser.add_argument('--verbose', type=bool, default=True, help='print VNLB updates')
     parser.add_argument('--deno_model', type=str, default='pacnet', help='name of cached denoised video as input')
     parser.add_argument('--file_ext', type=str, default='jpg', help='file extension: {jpg, png}')
     parser.add_argument('--jpg_out_folder', type=str, default='./output/videos/jpg_sequences/set/', \

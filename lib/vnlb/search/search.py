@@ -11,9 +11,7 @@ from einops import rearrange,repeat
 from easydict import EasyDict as edict
 
 # -- [a required package] --
-# from sim_search import compute_l2norm_cuda,fill_patches,fill_patches_img
-# from sim_search import exec_search#compute_l2norm_cuda,fill_patches,fill_patches_img
-import sim_search
+import vpss
 
 # -- local package --
 import vnlb.search_mask as search_mask
@@ -76,7 +74,7 @@ def search_and_fill(imgs,patches,bufs,srch_inds,flows,args):
     # -- sim search block --
     bufs.inds[...] = -1
     bufs.vals[...] = float("inf")
-    sim_search.exec_sim_search_burst(srch_img,srch_inds,bufs.vals,
+    vpss.exec_sim_search_burst(srch_img,srch_inds,bufs.vals,
                                      bufs.inds,flows,args.sigma,args)
     # -- fill patches --
     for key in imgs.patch_images:
@@ -86,4 +84,4 @@ def search_and_fill(imgs,patches,bufs,srch_inds,flows,args):
         if pass_key: continue
 
         # -- fill --
-        sim_search.fill_patches(patches[key],imgs[key],bufs.inds)
+        vpss.fill_patches(patches[key],imgs[key],bufs.inds)

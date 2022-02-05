@@ -1,6 +1,6 @@
 Video Non-Local Bayes (VNLB)
 =========================================
-A Python Implementation for Video Non-Local Bayesian Denoising. 
+A Python Implementation for Video Non-Local Bayesian Denoiser. 
 
 
 Install

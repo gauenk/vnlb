@@ -56,27 +56,7 @@ print("Execution Time (s): %2.2e" % dtime)
 Comparing with C++ Code
 ---
 
-The outputs from this VNLB code and the C++ Code are almost equal. The primary difference between to two method is the way in which we achieve parallelism. The C++ code uses OPENMP to execute parallel CPU threads and chunks the image into sections. In this code base, a batch of random pixels are selected to searched and this searching is executed in parallel on a GPU. A secondary (and seemingly less important) difference between the two methods is how the precision of the inherent different of matrix multiplication between the C++ LAPLACK package the Python Pytorch package. However, since the image denoising community is interested in differences of approximately 1e-3, these small errors do change the PSNR output.
-
-To show the difference between the two methods, we have included scripts. To download the output from the C++ VNLB package, one can execute
-
-```
-$ ./scripts/download_davis_64x64.sh
-```
-
-To run the comparison, we can then type:
-
-```
-$ export OMP_NUM_THREADS=4
-$ python scripts/compare_cpp.py
-```
-
-The script prints the below table. Each element of the table is the sum of the absolute relative error between the outputs from the Python API and C++ Code.
-
-|                   |   noisyForFlow |   noisyForVnlb |   fflow |   bflow |   basic |   denoised |
-|:------------------|---------------:|---------------:|--------:|--------:|--------:|-----------:|
-| Total Error (cv2) |    ? |              0 | ? |  ? |       0 |          0 |
-| Total Error (cpp) |    0           |              0 |   0     |   0     |       0 |          0 |
+The outputs from this VNLB code and the C++ Code are almost equal. The primary difference between to two method is the way in which we achieve parallelism. This difference impacts the final PSNR, especially on smaller images. More details are [included in docs/COMPARE.md](https://github.com/gauenk/vnlb/blob/master/docs/COMPARE.md).
 
 
 Credits

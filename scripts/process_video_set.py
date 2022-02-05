@@ -15,7 +15,7 @@ import torch as th
 import numpy as np
 from easydict import EasyDict as edict
 
-from vnlb import deno_nnnl
+from vnlb import deno_n3l
 from vnlb.utils import Logger
 from vnlb.utils import read_video_sequence,read_pacnet_noisy_sequence
 # from vnlb.nn_arch import load_nn_model
@@ -96,7 +96,6 @@ def process_video_set_func():
 
         # -- load clean seq --
         clean = read_video_sequence(vid_folder, opt.max_frame_num, opt.file_ext)
-        print("clean.shape: ",clean.shape)
 
         # -- load noisy from pacnet --
         nframes = clean.shape[0]
@@ -109,7 +108,7 @@ def process_video_set_func():
         islice.w = slice(0,-1)
         islice.h = slice(256,256+64)
         islice.w = slice(256,256+64)
-        # islice = None
+        islice = None
 
         if not(islice is None):
             clean = clean[islice.t,:,islice.h,islice.w]
@@ -123,14 +122,14 @@ def process_video_set_func():
             noisy = noisy.to(opt.gpuid)
 
         # -- denoise burst --
-        output = deno_nnnl(noisy, opt.sigma, opt.alpha, vid_name, opt.clipped_noise,
+        output = deno_n3l(noisy, opt.sigma, opt.alpha, vid_name, opt.clipped_noise,
                            opt.gpuid, opt.silent, opt.vid_set, opt.deno_model, islice)
         deno,deno_nl,deno_nn,tdelta = output
 
         # -- psnrs --
-        deno_psnr = compute_psnrs(deno,clean)
-        nl_psnr = compute_psnrs(deno_nl,clean)
-        nn_psnr = compute_psnrs(deno_nn,clean)
+        deno_psnr = compute_psnrs(deno,clean,1.)
+        nl_psnr = compute_psnrs(deno_nl,clean,1.)
+        nn_psnr = compute_psnrs(deno_nn,clean,1.)
         deno_psnr_list.append(deno_psnr.mean().item())
         nl_psnr_list.append(nl_psnr.mean().item())
         nn_psnr_list.append(nn_psnr.mean().item())

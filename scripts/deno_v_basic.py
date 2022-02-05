@@ -6,6 +6,7 @@ from einops import rearrange,repeat
 
 from vnlb.utils.sobel import apply_sobel_filter
 
+
 def deno_v_basic(fid,vid_name,sigma):
     # -- root --
     root = "/home/gauenk/Documents/packages/vnlb/"

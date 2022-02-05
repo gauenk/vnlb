@@ -36,7 +36,7 @@ def default_params(sigma):
     params = edict()
     params.aggreBoost = [True,True]
     params.beta = [1.0,1.0]
-    params.bsize = [32,32]
+    params.bsize = [128,128]
     params.c = [3,3]
     params.coupleChannels = [False,False]
     params.device = ['cpu','cpu']
@@ -186,7 +186,7 @@ def get_args(params,c,step,device):
     params.nstreams = [int(x) for x in optional(params,'nstreams',[1,18])]
     params.nkeep = [int(x) for x in optional(params,'simPatchRefineKeep',[-1,-1])]
     params.offset = [float(x) for x in optional(params,'offset',offsets)]
-    params.bsize = [int(x) for x in optional(params,'bsize_s',[8,8])]
+    params.bsize = [int(x) for x in optional(params,'bsize',[8,8])]
     params.nfilter = [int(x) for x in optional(params,'nfilter',[-1,-1])]
     params.mod_sel = ["clipped","clipped"]
     params.device = [device,device]

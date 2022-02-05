@@ -11,4 +11,4 @@
 # from .misc import patch_est_plot
 # from .patch_subset import exec_patch_subset
 # from .vnlb import denoise
-from .impl import denoise
+from .impl import denoise,deno_n3l

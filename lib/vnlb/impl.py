@@ -63,7 +63,7 @@ def denoise(noisy, sigma, gpuid=0, clean=None):
     return deno,basic,tdelta
 
 
-def deno_nnnl(noisy, sigma, alpha, vid_name, clipped_noise, gpuid, silent,
+def deno_n3l(noisy, sigma, alpha, vid_name, clipped_noise, gpuid, silent,
               vid_set="set8", deno_model="pacnet", islice=None, clean=None):
     """
     Method submitted to ECCV 2022

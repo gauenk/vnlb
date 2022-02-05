@@ -18,7 +18,7 @@ Or the package can be downloaded through github,
 $ git clone https://github.com/gauenk/vnlb/
 $ cd vnlb
 $ python -m pip install -r requirements.txt --user
-$ ./install.sh
+$ python -m pip install -e ./lib --user
 ```
 
 Usage

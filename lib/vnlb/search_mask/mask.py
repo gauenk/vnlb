@@ -83,6 +83,22 @@ def update_mask_inds(mask,inds,chnls,cs_ptr=None,boost=True,val=0,nkeep=-1):
     # -- assign mask info --
     update_mask(mask,aug_inds,val)
 
+def expand_inds(inds,t,c,h,w):
+
+    # -- alloc --
+    bsize,num = inds.shape
+    aug_inds = th.zeros((3,bsize,num),dtype=th.int64)
+    aug_inds = aug_inds.to(inds.device)
+
+    # -- fill --
+    hw,chw = h*w,c*h*w
+    tdiv,tmod = th.div,th.remainder
+    aug_inds[0,...] = tdiv(inds,chw,rounding_mode='floor') # inds // chw
+    aug_inds[1,...] = tdiv(tmod(inds,hw),w,rounding_mode='floor') # (inds % hw) // w
+    aug_inds[2,...] = tmod(inds,w)
+    aug_inds = rearrange(aug_inds,'three b n -> (b n) three')
+    return aug_inds
+
 def agg_boost(inds,t,c,h,w,cs_ptr):
 
     # include neighbor pixels as "masked"

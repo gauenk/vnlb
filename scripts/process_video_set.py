@@ -15,7 +15,7 @@ import torch as th
 import numpy as np
 from easydict import EasyDict as edict
 
-from vnlb import denoise
+from vnlb import deno_nnnl
 from vnlb.utils import Logger
 from vnlb.utils import read_video_sequence,read_pacnet_noisy_sequence
 # from vnlb.nn_arch import load_nn_model
@@ -123,8 +123,8 @@ def process_video_set_func():
             noisy = noisy.to(opt.gpuid)
 
         # -- denoise burst --
-        output = denoise(noisy, opt.sigma, opt.alpha, vid_name, opt.clipped_noise,
-                         opt.gpuid, opt.silent, opt.vid_set, opt.deno_model, islice)
+        output = deno_nnnl(noisy, opt.sigma, opt.alpha, vid_name, opt.clipped_noise,
+                           opt.gpuid, opt.silent, opt.vid_set, opt.deno_model, islice)
         deno,deno_nl,deno_nn,tdelta = output
 
         # -- psnrs --

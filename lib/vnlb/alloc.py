@@ -37,20 +37,21 @@ def allocate_images(noisy,basic,clean):
     imgs.device = noisy.device
 
     # -- unpack params --
+    dtype = noisy.dtype
     device = noisy.device
     t,c,h,w = noisy.shape
 
     # -- basic --
     imgs.basic = basic
     if basic is None:
-        imgs.basic = th.zeros((t,c,h,w)).to(device)
+        imgs.basic = th.zeros((t,c,h,w),dtype=dtype).to(device)
 
     # -- clean --
     imgs.clean = clean
 
     # -- deno & agg weights --
-    imgs.deno = th.zeros((t,c,h,w)).to(device)
-    imgs.weights = th.zeros((t,h,w)).to(device)
+    imgs.deno = th.zeros((t,c,h,w),dtype=dtype).to(device)
+    imgs.weights = th.zeros((t,h,w),dtype=dtype).to(device)
 
     # -- names --
     imgs.patch_images = ["noisy","basic","clean"]
@@ -76,7 +77,7 @@ def allocate_bufs(shape,device):
     # -- alloc mem --
     l2bufs = edict()
     l2bufs.vals = th.zeros((tsize,npa)).type(tf32).to(device)
-    l2bufs.inds = th.zeros((tsize,npa)).type(tfl).to(device)
+    l2bufs.inds = -th.ones((tsize,npa)).type(tfl).to(device)
     l2bufs.shape = shape
 
     return l2bufs

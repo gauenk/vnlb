@@ -72,26 +72,26 @@ def rgb2bw(burst):
     burst_bw = np.stack(burst_bw)
     return burst_bw
 
-def compute_psnrs(img1,img2,imax=255.):
+# def compute_psnrs(img1,img2,imax=255.):
 
-    # -- same num of dims --
-    assert img1.ndim == img2.ndim,"both must have same dims."
+#     # -- same num of dims --
+#     assert img1.ndim == img2.ndim,"both must have same dims."
 
-    # -- give batch dim if not exist --
-    if img1.ndim == 3:
-        img1 = img1[None,:]
-        img2 = img2[None,:]
+#     # -- give batch dim if not exist --
+#     if img1.ndim == 3:
+#         img1 = img1[None,:]
+#         img2 = img2[None,:]
 
-    # -- compute --
-    eps=1e-16
-    b = img1.shape[0]
-    img1 = img1/imax
-    img2 = img2/imax
-    delta = (img1 - img2)**2
-    mse = delta.reshape(b,-1).mean(axis=1) + eps
-    log_mse = np.ma.log10(1./mse).filled(-np.infty)
-    psnr = 10 * log_mse
-    return psnr
+#     # -- compute --
+#     eps=1e-16
+#     b = img1.shape[0]
+#     img1 = img1/imax
+#     img2 = img2/imax
+#     delta = (img1 - img2)**2
+#     mse = delta.reshape(b,-1).mean(axis=1) + eps
+#     log_mse = np.ma.log10(1./mse).filled(-np.infty)
+#     psnr = 10 * log_mse
+#     return psnr
 
 def optional_pair(pydict,key,default,dtype):
     value = optional(pydict,key,default,dtype)

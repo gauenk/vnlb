@@ -51,7 +51,7 @@ def agg_patches(patches,images,bufs,args,cs_ptr=None):
         cs_ptr = torch.cuda.default_stream().cuda_stream
 
     # -- filter by valid --
-    valid = torch.where(torch.all(bufs.inds!=-1,1))
+    valid = torch.nonzero(torch.all(bufs.inds!=-1,1))[:,0]
     vnoisy = patches.noisy[valid]
     vinds = bufs.inds[valid]
 

@@ -36,7 +36,7 @@ def default_params(sigma):
     params = edict()
     params.aggreBoost = [True,True]
     params.beta = [1.0,1.0]
-    params.bsize = [128,128]
+    params.bsize = [32,32]
     params.c = [3,3]
     params.coupleChannels = [False,False]
     params.device = ['cpu','cpu']
@@ -54,7 +54,7 @@ def default_params(sigma):
     params.procStep = [3,3]
     params.rank = [39,39]
     params.sigma = [sigma,sigma]
-    params.sigmaBasic = [0,0]
+    params.sigmaBasic = [sigma,0]
     params.sizePatch  = [7,7]
     params.sizePatchTime  = [2,2]
     params.sizeSearchTimeBwd = [6,6]
@@ -65,7 +65,7 @@ def default_params(sigma):
     params.testing = [False,False]
     params.use_imread = [False,False]
     params.var_mode = [0,0]
-    params.variThres = [0.7,0.7]
+    params.variThres = [2.7,1.2] # 0.7
     params.verbose = [False,False]
     return params
 
@@ -186,7 +186,7 @@ def get_args(params,c,step,device):
     params.nstreams = [int(x) for x in optional(params,'nstreams',[1,18])]
     params.nkeep = [int(x) for x in optional(params,'simPatchRefineKeep',[-1,-1])]
     params.offset = [float(x) for x in optional(params,'offset',offsets)]
-    params.bsize = [int(x) for x in optional(params,'bsize_s',[128,128])]
+    params.bsize = [int(x) for x in optional(params,'bsize_s',[8,8])]
     params.nfilter = [int(x) for x in optional(params,'nfilter',[-1,-1])]
     params.mod_sel = ["clipped","clipped"]
     params.device = [device,device]

@@ -32,6 +32,10 @@ def exec_search(patches,imgs,flows,mask,bufs,args):
     cs_ptr = th.cuda.default_stream().cuda_stream
     done = False
 
+    # --reset values --
+    bufs.inds[...] = -1
+    bufs.vals[...] = float("inf")
+
     # -- smaller batch sizes impact quality --
     for index in range(args.nstreams):
 
@@ -83,5 +87,3 @@ def search_and_fill(imgs,patches,bufs,srch_inds,flows,args):
 
         # -- fill --
         sim_search.fill_patches(patches[key],imgs[key],bufs.inds)
-
-

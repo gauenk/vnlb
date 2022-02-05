@@ -127,6 +127,8 @@ def denoise_eigvals(eigVals,sigmab2,mod_sel,rank):
         th_sigmab2 = th_sigmab2.to(eigVals.device)
         emin = torch.min(eigVals[...,:rank],th_sigmab2)
         eigVals[...,:rank] -= emin
+    elif mod_sel == "paul":
+        pass
     else:
         raise ValueError(f"Uknown eigen-stuff modifier: [{mod_sel}]")
 

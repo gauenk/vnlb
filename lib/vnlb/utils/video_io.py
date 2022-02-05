@@ -40,7 +40,21 @@ Saving computed images
 
 """
 
+def save_burst(burst, folder_name, prefix):
+    # -- make dir if needed --
+    path = Path(folder_name)
+    if not(path.exists()): path.mkdir(parents=True)
+    t,c,h,w = burst.shape
+    for ti in range(t):
+        name = "%s_%05d.png" % (prefix,ti)
+        save_image(burst[ti],folder_name,name)
+
 def save_image(image_to_save, folder_name, image_name):
+    # -- make dir if needed --
+    path = Path(folder_name)
+    if not(path.exists()): path.mkdir(parents=True)
+
+    # -- save --
     image_to_save = float_tensor_to_np_uint8(image_to_save)
     image_to_save = cv2.cvtColor(image_to_save, cv2.COLOR_RGB2BGR)
     fn = folder_name + image_name
@@ -52,9 +66,11 @@ def save_numpy(image_to_save, folder_name, image_name):
     np.save(fn,img)
 
 def float_tensor_to_np_uint8(im_in):
-    im_out = im_in.clone().clamp(0, 1).cpu()
-    im_out = im_out.permute(1, 2, 0)
-    im_out = np.round(im_out.numpy() * 255)
+    if th.is_tensor(im_in):
+        im_in = im_in.clone().cpu().numpy()
+    im_out = im_in.clip(0, 1)
+    im_out = im_out.transpose(1, 2, 0)
+    im_out = np.round(im_out * 255)
     im_out = im_out.astype(np.uint8)
     return im_out
 

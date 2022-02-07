@@ -18,6 +18,7 @@ def denoise(patches,args):
 
     # -- copy original patches --
     pnoisy = patches.noisy
+    pbasic = patches.basic.clone()
     bsize = pnoisy.shape[0]
 
     # -- flatten dims --
@@ -41,19 +42,23 @@ def denoise(patches,args):
     bayes_filter_coeff(eigVals,args.sigma2,args.thresh)
 
     # -- filter --
-    filter_patches(patches.noisy,covMat,eigVals,eigVecs,args.sigma2,args.rank)
+    filter_patches(patches.basic,covMat,eigVals,eigVecs,args.sigma2,args.rank)
 
     # -- expand batch and color --
     expand_bdim(patches,args)
 
-    # -- recent --
+    # -- re-center --
     patches.noisy[...] += cnoisy
+    if args.step == 1: patches.basic[...] += cbasic
 
     # -- reshape --
     expand_pdim(patches,args)
 
     # -- fill? --
-    pnoisy[...] = patches.noisy[...]
+    # pnoisy[...] = pbasic[...]#patches.basic[...]
+    # pnoisy[...] = patches.noisy[...]
+    patches.noisy[...] = patches.basic[...]#pbasic[...]
+
     return rank_var
 
 

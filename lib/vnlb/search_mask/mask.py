@@ -114,6 +114,7 @@ def agg_boost(inds,t,c,h,w,cs_ptr):
 
     # -- launch --
     agg_boost_launcher(agg,inds,deltas,t,c,h,w,cs_ptr)
+    th.cuda.synchronize()
 
     # -- remove "-1" --
     agg = rearrange(agg,'b four three -> (b four) three')
@@ -136,7 +137,6 @@ def agg_boost_launcher(agg,inds,deltas,t,c,h,w,cs_ptr):
     work_per_thread = 1
     threads = 512
     blocks = divUp(B,threads*work_per_thread)
-    # print(blocks,threads,cs_nba)
     agg_boost_cuda[blocks,threads,cs_nba](agg_nba,inds_nba,deltas_nba,
                                           work_per_thread,t,c,h,w)
 
@@ -152,7 +152,7 @@ def agg_boost_cuda(agg,inds,deltas,wpt,t,c,h,w):
     start_idx = tIdx*wpt + bIdx*bdimX*wpt
     for work_idx in range(wpt):
         idx = start_idx + work_idx
-        if idx > inds.shape[0]: continue
+        if idx >= inds.shape[0]: continue
 
         ti = inds[idx,0]
         hi = inds[idx,1]

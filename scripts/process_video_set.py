@@ -92,6 +92,8 @@ def process_video_set_func():
         # -- name model --
         vid_name = video_names[i]
         # if vid_name != "park_joy": continue
+        # if vid_name != "sunflower": continue
+        # if vid_name != "tractor": continue
         vid_folder = opt.in_folder + '{}/'.format(vid_name)
 
         # -- load clean seq --
@@ -151,20 +153,8 @@ def process_video_set_func():
 
         if opt.save_jpg:
             save_dict = {"noisy":noisy,"nn":deno_nn,"nl":deno_nl,"deno":deno}
-            # save_vid_name = vid_name + "_test"
-            save_jpg(opt,save_vid_name,save_dict)#noisy,deno_nn,deno_nl,deno)
-
-        # if opt.save_avi:
-        #     noisy_folder_avi = opt.avi_out_folder + '/noisy_{}/'.format(opt.sigma)
-        #     if not os.path.exists(noisy_folder_avi):
-        #         os.mkdir(noisy_folder_avi)
-
-        #     denoised_folder_avi = opt.avi_out_folder + '/denoised_{}/'.format(opt.sigma)
-        #     if not os.path.exists(denoised_folder_avi):
-        #         os.mkdir(denoised_folder_avi)
-
-        #     save_video_avi(noisy, noisy_folder_avi, vid_name)
-        #     save_video_avi(denoised_vid_t, denoised_folder_avi, vid_name)
+            save_vid_name = vid_name + "_test"
+            save_jpg(opt,save_vid_name,save_dict)
 
     print('')
     print('-' * 90)

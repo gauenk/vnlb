@@ -54,17 +54,20 @@ def agg_patches(patches,images,bufs,args,cs_ptr=None):
     valid = torch.nonzero(torch.all(bufs.inds!=-1,1))[:,0]
     vnoisy = patches.noisy[valid]
     vinds = bufs.inds[valid]
+    vvals = bufs.vals[valid]
 
     return compute_agg_batch(images.deno,vnoisy,vinds,images.weights,
-                             args.ps,args.ps_t,cs_ptr)
+                             vvals,images.vals,args.ps,args.ps_t,cs_ptr)
 
-def compute_agg_batch(deno,patches,inds,weights,ps,ps_t,cs_ptr):
+def compute_agg_batch(deno,patches,inds,weights,vals,ivals,ps,ps_t,cs_ptr):
 
     # -- numbify the torch tensors --
     deno_nba = cuda.as_cuda_array(deno)
     patches_nba = cuda.as_cuda_array(patches)
     inds_nba = cuda.as_cuda_array(inds)
     weights_nba = cuda.as_cuda_array(weights)
+    vals_nba = cuda.as_cuda_array(vals)
+    ivals_nba = cuda.as_cuda_array(ivals)
     cs_nba = cuda.external_stream(cs_ptr)
 
     # -- launch params --
@@ -73,10 +76,10 @@ def compute_agg_batch(deno,patches,inds,weights,ps,ps_t,cs_ptr):
     blocks = bsize
 
     # -- launch kernel --
-    exec_agg_simple(deno,patches,inds,weights,ps,ps_t)
+    exec_agg_simple(deno,patches,inds,weights,vals,ivals,ps,ps_t)
 
 
-def exec_agg_simple(deno,patches,inds,weights,ps,ps_t):
+def exec_agg_simple(deno,patches,inds,weights,vals,ivals,ps,ps_t):
 
     # -- numbify --
     device = deno.device
@@ -84,20 +87,24 @@ def exec_agg_simple(deno,patches,inds,weights,ps,ps_t):
     patches_nba = patches.cpu().numpy()
     inds_nba = inds.cpu().numpy()
     weights_nba = weights.cpu().numpy()
-    # print("patches.shape: ",patches.shape)
+    vals_nba = vals.cpu().numpy()
+    ivals_nba = ivals.cpu().numpy()
 
     # -- exec numba --
-    exec_agg_simple_numba(deno_nba,patches_nba,inds_nba,weights_nba,ps,ps_t)
+    exec_agg_simple_numba(deno_nba,patches_nba,inds_nba,
+                          weights_nba,vals_nba,ivals_nba,ps,ps_t)
 
     # -- back pack --
     deno_nba = torch.FloatTensor(deno_nba).to(device)
     deno[...] = deno_nba
     weights_nba = torch.FloatTensor(weights_nba).to(device)
     weights[...] = weights_nba
+    ivals_nba = torch.FloatTensor(ivals_nba).to(device)
+    ivals[...] = ivals_nba
 
 
 @njit
-def exec_agg_simple_numba(deno,patches,inds,weights,ps,ps_t):
+def exec_agg_simple_numba(deno,patches,inds,weights,vals,ivals,ps,ps_t):
 
     # -- shape --
     nframes,color,height,width = deno.shape
@@ -117,10 +124,20 @@ def exec_agg_simple_numba(deno,patches,inds,weights,ps,ps_t):
             for pt in range(ps_t):
                 for pi in range(ps):
                     for pj in range(ps):
+                        t1 = (t0+pt)# % nframes
+                        h1 = (h0+pi)# % height
+                        w1 = (w0+pj)# % width
+
+                        if t1 < 0 or t1 >= nframes: continue
+                        if h1 < 0 or h1 >= height: continue
+                        if w1 < 0 or w1 >= width: continue
+
                         for ci in range(color):
                             gval = patches[bi,ni,pt,ci,pi,pj]
-                            deno[t0+pt,ci,h0+pi,w0+pj] += gval
-                        weights[t0+pt,h0+pi,w0+pj] += 1.
+                            deno[t1,ci,h1,w1] += gval
+                        weights[t1,h1,w1] += 1.
+                        # if ni > 0:
+                        #     ivals[t0+pt,h0+pi,w0+pj] += vals[bi,ni]
 
 
 @cuda.jit(max_registers=64)

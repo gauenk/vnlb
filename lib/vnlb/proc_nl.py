@@ -26,6 +26,7 @@ from vnlb.utils import idx2coords,coords2idx,patches2groups,groups2patches
 # -- project imports --
 from vnlb.utils.gpu_utils import apply_color_xform_cpp,yuv2rgb_cpp
 from vnlb.utils import groups2patches,patches2groups,optional,divUp,save_burst
+from vnlb.utils.video_io import read_nl_sequence
 from vnlb.testing import save_images
 from vnlb.utils.streams import init_streams,wait_streams
 import pprint
@@ -63,18 +64,20 @@ def proc_nl(images,flows,args):
         # -- exec search --
         done = search.exec_search(patches,images,flows,mask,bufs,args)
 
+        # -- refinemenent the searching --
+        search.exec_refinement(patches,bufs,args.sigma)
+
         # -- flat patches --
         update_flat_patch(patches,args)
 
+        # -- valid patches --
+        vpatches = get_valid_patches(patches,bufs)
+
         # -- denoise patches --
-        # run_swig_bayes(patches,images,args,full_args)
-        # from svnlb.gpu import bayes_estimate_batch
-        # cs_ptr = th.cuda.default_stream().cuda_stream
-        # rank_var = bayes_estimate_batch(patches.noisy,patches.basic,None,
-        #                                 args.sigma2,args.sigmab2,args.rank,
-        #                                 args.group_chnls,args.thresh,
-        #                                 args.step==1,patches.flat,0,cs_ptr)
-        deno.denoise(patches,args)
+        deno.denoise(vpatches,args)
+
+        # -- fill valid --
+        fill_valid_patches(vpatches,patches,bufs)
 
         # -- aggregate patches --
         agg.agg_patches(patches,images,bufs,args)
@@ -100,6 +103,10 @@ def proc_nl(images,flows,args):
         # - terminate --
         if done: break
 
+    # -- reweight vals --
+    # reweight_vals(images)
+    # images.weights[th.where(images.weights<5)]=0
+
     # -- reweight deno --
     weights = repeat(images.weights,'t h w -> t c h w',c=args.c)
     index = torch.nonzero(weights,as_tuple=True)
@@ -116,42 +123,43 @@ def proc_nl(images,flows,args):
     # -- synch --
     torch.cuda.synchronize()
 
+def reweight_vals(images):
+    nmask_before = images.weights.sum().item()
+    index = torch.nonzero(images.weights,as_tuple=True)
+    images.vals[index] /= images.weights[index]
+    irav = images.vals.ravel().cpu().numpy()
+    print(np.quantile(irav,[0.1,0.2,0.5,0.8,0.9]))
+    # thresh = 0.00014
+    thresh = 1e-3
+    nz = th.sum(images.vals < thresh).item()
+    noupdate = th.nonzero(images.vals > thresh,as_tuple=True)
+    images.weights[noupdate] = 0
+    th.cuda.synchronize()
+    nmask_after = images.weights.sum().item()
+    delta_nmask = nmask_before - nmask_after
+    print("tozero: [%d/%d]" % (nmask_after,nmask_before))
 
-def run_swig_bayes(patches,images,args,full_args):
-    from svnlb.swig import computeBayesEstimate
-    device = patches.noisy.device
 
-    # -- unpack tensors --
-    noisy = patches.noisy.cpu().numpy()
-    basic = patches.basic.cpu().numpy()
+def fill_valid_patches(vpatches,patches,bufs):
+    valid = th.nonzero(th.all(bufs.inds!=-1,1),as_tuple=True)
+    for key in patches:
+        if (key in patches.tensors) and not(patches[key] is None):
+            patches[key][valid] = vpatches[key]
 
-    # -- rearrange --
-    noisy = rearrange(noisy,'b n t c h w -> b n c (t h w)')
-    basic = rearrange(basic,'b n t c h w -> b n c (t h w)')
+def get_valid_patches(patches,bufs):
+    valid = th.nonzero(th.all(bufs.inds!=-1,1),as_tuple=True)
+    nv = len(valid)
+    vpatches = edict()
+    for key in patches:
+        if (key in patches.tensors) and not(patches[key] is None):
+            vpatches[key] = patches[key][valid]
+        else:
+            vpatches[key] = patches[key]
+    vpatches.shape[0] = nv
 
-    # -- fake full --
-    full_args = edict({k:[v,v] for k,v in args.items()})
-    full_args.nParts = [0,0]
+    return vpatches
 
-    # -- unroll --
-    N = noisy.shape[1]
-    nshell = np.zeros((9477,3,98),dtype=np.float32)
-    bshell = np.zeros((9477,3,98),dtype=np.float32)
-    sfloat = np.array([args.sigma,args.sigma],np.float32)
-    B = noisy.shape[0]
-    for b in range(B):
-        print("noisy[b].shape: ",noisy[b].shape)
-        nshell[:N] = noisy[b]
-        bshell[:N] = basic[b]
-        results = computeBayesEstimate(nshell,bshell,args.rank,args.npatches,
-                                       images.shape,{'sigma':sfloat},step=args.step)
-        noisy[b] = results['groupNoisy'].copy()[:N]
-        basic[b] = results['groupBasic'].copy()[:N]
-
-    # -- rearrange --
-    noisy = rearrange(noisy,'b n c (t h w) -> b n t c h w',t=2,h=7)
-    basic = rearrange(basic,'b n c (t h w) -> b n t c h w',t=2,h=7)
-    patches.noisy[...] = th.from_numpy(noisy).to(device)
-    patches.basic[...] = th.from_numpy(basic).to(device)
+def proc_nl_cache(vid_set,vid_name,sigma):
+    return read_nl_sequence(vid_set,vid_name,sigma)
 
 

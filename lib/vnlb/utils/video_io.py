@@ -73,6 +73,38 @@ def float_tensor_to_np_uint8(im_in):
     im_out = np.round(im_out * 255)
     im_out = im_out.astype(np.uint8)
     return im_out
+"""
+
+Video-IO for Denoised Sequences
+
+"""
+
+# def read_nl_denoised_sequence(vid_set,vid_name,itype,sigma):
+#     return read_nl_sequence(vid_set,vid_name,"deno",sigma)
+
+def read_nl_sequence(vid_set,vid_name,sigma):
+
+    # -- path --
+    path = Path("/home/gauenk/Documents/packages/vnlb/")
+    path = path / f"output/videos/jpg_sequences/set/set8/nl_{sigma}"
+    path = path / vid_name
+    assert path.exists(),f"path must exist {path}"
+    nframes = 85
+
+    # -- load video --
+    vid = []
+    for t in range(nframes):
+
+        fn = path / ("%05d.npy" % (t))
+        if not(fn.exists()): break
+        fn = str(fn)
+
+        frame = np.load(fn)
+        vid.append(th.from_numpy(frame))
+
+    vid = th.stack(vid).squeeze()
+
+    return vid
 
 """
 
@@ -81,14 +113,14 @@ Video-IO for UDVD Sequences
 
 """
 
-def read_udvd_denoised_sequence(vid_name,vid_set,sigma,nframes=85):
-    return read_udvd_sequence(vid_name,vid_set,sigma,"denoised",nframes)
+def read_udvd_denoised_sequence(vid_set,vid_name,sigma,nframes=85):
+    return read_udvd_sequence(vid_set,vid_name,sigma,"deno",nframes)
 
-def read_udvd_sequence(vid_name,vid_set,sigma,itype,nframes):
+def read_udvd_sequence(vid_set,vid_name,sigma,itype,nframes):
     path = Path("/home/gauenk/Documents/packages/")
     path = path / f"udvd/output/{vid_set}/"
     path = path / f"{itype}_{sigma}" / vid_name
-    assert path.exists()
+    assert path.exists(),f"path must exist {path}"
 
     # -- load video --
     vid = []
@@ -101,7 +133,7 @@ def read_udvd_sequence(vid_name,vid_set,sigma,itype,nframes):
         frame = np.load(fn)
         vid.append(th.from_numpy(frame))
 
-    vid = th.stack(vid)
+    vid = th.stack(vid).squeeze()
 
     return vid
 
@@ -125,7 +157,7 @@ def read_pacnet_sequence(vid_set,vid_name,sigma,itype,nframes=85):
     path = Path("/home/gauenk/Documents/packages/")
     path = path / "PaCNet-denoiser/output/videos/jpg_sequences/set/"
     path = path / f"{itype}_{sigma}" / vid_name
-    assert path.exists()
+    assert path.exists(),f"path must exist {path}"
 
     # -- load video --
     vid = []

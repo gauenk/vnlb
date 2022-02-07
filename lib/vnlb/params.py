@@ -8,30 +8,6 @@ from easydict import EasyDict as edict
 
 from .utils import optional
 
-def not_here():
-
-    # -- place on cuda --
-    device = gpuid
-    if not(th.is_tensor(noisy)):
-        noisy = th.FloatTensor(noisy).to(device)
-        zero_basic = th.zeros_like(noisy)
-        basic = zero_basic if basic is None else basic
-        basic = basic.to(device)
-    if not(clean is None):
-        clean = th.FloatTensor(clean).to(device)
-
-    # -- init outputs --
-    shape = noisy.shape
-    t,c,h,w = noisy.shape
-    deno = th.zeros_like(noisy)
-    # flows = edict({k:th.FloatTensor(v).to(device) for k,v in flows.items()})
-
-    # -- to device flow --
-    # flows = edict({k:th.FloatTensor(v).to(device) for k,v in flows.items()})
-    zflow = torch.zeros((t,2,h,w)).to(device)
-    fflow = optional(flows,'fflow',zflow)
-    bflow = optional(flows,'bflow',zflow)
-
 def default_params(sigma,verbose=False):
     params = edict()
     params.aggreBoost = [True,True]
@@ -65,16 +41,19 @@ def default_params(sigma,verbose=False):
     params.testing = [False,False]
     params.use_imread = [False,False]
     params.var_mode = [0,0]
-    params.variThres = [2.7,1.2] # 0.7
+    params.variThres = [2.7,0.7] # 0.7
     params.verbose = [verbose,verbose]
     return params
 
 def get_params(sigma,verbose=False):
     params = default_params(sigma,verbose)
-    params['nSimilarPatches'][0] = 100
-    params['nSimilarPatches'][1] = 60
+    version = "default"
+    version = "exp"
+    if version == "exp":
+        params['nSimilarPatches'][0] = 100
+        params['nSimilarPatches'][1] = 10
+        params['sizePatch'] = [7,7]
     # params['gamma'][1] = 1.00
-    params['sizePatch'] = [7,7]
     # params['useWeights'] = [False,False]
     # params['simPatchRefineKeep'] = [100,100]
     # params['cleanSearch'] = [True,True]
@@ -193,57 +172,6 @@ def get_args(params,c,step,device):
 
     # -- args --
     args = VnlbArgs(params,step)
-
-    return args
-
-def get_args_old(params,c,step):
-
-    # -- unpack --
-    args = edict() # used for call
-    args.c = c
-    args.step = step
-    args.ps = params['sizePatch'][step]
-    # args.sizePatch = args.ps
-    args.ps_t = params['sizePatchTime'][step]
-    # args.sizePatchTime = ps_t
-    args.npatches = params['nSimilarPatches'][step]
-    # args.nSimilarPatches = npatches
-    args.w_s = params['sizeSearchWindow'][step]
-
-    args.nWt_f = params['sizeSearchTimeFwd'][step]
-    args.nWt_b = params['sizeSearchTimeBwd'][step]
-    args.couple_ch = params['coupleChannels'][step]
-    args.group_chnls = 1 if args.couple_ch else c
-    args.step1 = step == 0
-    check_steps(args.step1,step)
-    args.sigma = params['sigma'][step]
-    args.sigma2 = params['sigma'][step]**2
-    args.beta = params['beta'][step]
-    args.sigmaBasic2 = params['sigmaBasic'][step]**2
-    args.sigmab2 = args.beta * args.sigmaBasic2 if step==1 else args.sigma**2
-    args.rank =  params['rank'][step]
-    args.thresh =  params['variThres'][step]
-    args.flat_areas = params['flatAreas'][step]
-    args.gamma = params['gamma'][step]
-    args.procStep = 1
-    args.step_s = 1#params['procStep'][step]
-
-    # -- optional --
-    args.nstreams = int(optional(params,'nstreams',[1,12])[step])
-    args.nkeep = int(optional(params,'simPatchRefineKeep',[-1,-1])[step])
-    args.offset = float(optional(params,'offset',[2*(args.sigma/255.)**2,0.])[step])
-    args.bsize = int(optional(params,'bsize_s',[128,128])[step])
-    args.nfilter = int(optional(params,'nfilter',[-1,-1])[step])
-
-    # -- ints to bool --
-    use_weights = int(optional(params,'useWeights',[False,False])[step])
-    clean_srch = int(optional(params,'cleanSearch',[False,False])[step])
-    args.use_weights = True if use_weights == 1 else False
-    args.clean_srch = True if clean_srch == 1 else False
-
-    # -- final derived values  --
-    args.patch_shape = get_patch_shape(args)
-    args.bufs_shape = get_bufs_shape(args)
 
     return args
 

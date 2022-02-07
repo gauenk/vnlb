@@ -63,6 +63,9 @@ def exec_search(patches,imgs,flows,mask,bufs,args):
         # -- wait for all streams --
         torch.cuda.synchronize()
 
+    # -- update term. condition --
+    done = done or (mask.sum().item() == 0)
+
     return done
 
 def search_and_fill(imgs,patches,bufs,srch_inds,flows,args):

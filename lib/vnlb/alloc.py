@@ -25,6 +25,7 @@ def allocate_patches(shape,clean,device):
 
     # -- names --
     patches.images = ["noisy","basic","clean"]
+    patches.tensors = ["noisy","basic","clean","flat"]
 
     return patches
 
@@ -52,6 +53,7 @@ def allocate_images(noisy,basic,clean):
     # -- deno & agg weights --
     imgs.deno = th.zeros((t,c,h,w),dtype=dtype).to(device)
     imgs.weights = th.zeros((t,h,w),dtype=dtype).to(device)
+    imgs.vals = th.zeros((t,h,w),dtype=dtype).to(device)
 
     # -- names --
     imgs.patch_images = ["noisy","basic","clean"]

@@ -35,7 +35,7 @@ def main():
     cache_dir = ".cache_io"
     cache_name = "interp_square_s"
     cache = cache_io.ExpCache(cache_dir,cache_name)
-    # cache.clear()
+    cache.clear()
 
     # -- eval across grid --
     set8_names = ["hypersmooth","motorbike","park_joy","rafting",
@@ -122,7 +122,7 @@ def interp_grid(vid_set,vid_name,sigma):
                 psnr = compute_psnrs_cuda(deno,imgs.clean,1.)
 
                 # -- save burst --
-                save_path = path / ("%s_%s" % (key2,key1))
+                save_path = path / ("%s_%s" % (key1,key2))
                 if not save_path.exists(): save_path.mkdir()
                 save_path = str(save_path) + "/"
                 prefix = "alpha_%d" % ( alpha*100 )

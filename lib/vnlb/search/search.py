@@ -78,7 +78,7 @@ def search_and_fill(imgs,patches,bufs,srch_inds,flows,args):
     bufs.inds[...] = -1
     bufs.vals[...] = float("inf")
     vpss.exec_sim_search_burst(srch_img,srch_inds,bufs.vals,
-                                     bufs.inds,flows,args.sigma,args)
+                               bufs.inds,flows,args.sigma,args)
     # -- fill patches --
     for key in imgs.patch_images:
 

@@ -15,12 +15,12 @@ import torch as th
 import numpy as np
 from easydict import EasyDict as edict
 
-from vnlb import deno_n3l
+from vnlb import deno_n3l,deno_n4
 from vnlb.utils import Logger
 from vnlb.utils import read_video_sequence,read_pacnet_noisy_sequence
 # from vnlb.nn_arch import load_nn_model
 from vnlb.utils.video_io import save_image,save_numpy
-from vnlb.utils.metrics import compute_psnrs
+from vnlb.utils.metrics import compute_psnrs,skimage_psnr
 
 def save_jpg(opt,vid_name,save_images):
     # -- setup --
@@ -115,7 +115,6 @@ def process_video_set_func():
         if not(islice is None):
             clean = clean[islice.t,:,islice.h,islice.w]
             noisy = noisy[islice.t,:,islice.h,islice.w]
-        print("[sliced] clean.shape: ",clean.shape)
 
         if opt.clipped_noise:
             noisy = torch.clamp(noisy, min=0, max=1)
@@ -124,18 +123,39 @@ def process_video_set_func():
             noisy = noisy.to(opt.gpuid)
 
         # -- denoise burst --
-        output = deno_n3l(noisy, opt.sigma, opt.alpha, vid_name, opt.clipped_noise,
-                          opt.gpuid, opt.silent, opt.vid_set, opt.deno_model, islice,
-                          verbose=opt.verbose)
+        # output = deno_n3l(noisy, opt.sigma, opt.alpha, vid_name, opt.clipped_noise,
+        #                   opt.gpuid, opt.silent, opt.vid_set, opt.deno_model, islice,
+        #                   verbose=opt.verbose)
+        output = deno_n4(noisy, opt.sigma, opt.alpha, vid_name, opt.clipped_noise,
+                         opt.gpuid, opt.silent, opt.vid_set, opt.deno_model, islice,
+                         verbose=opt.verbose)
         deno,deno_nl,deno_nn,tdelta = output
 
+        #
         # -- psnrs --
-        deno_psnr = compute_psnrs(deno,clean,1.)
-        nl_psnr = compute_psnrs(deno_nl,clean,1.)
-        nn_psnr = compute_psnrs(deno_nn,clean,1.)
-        deno_psnr_list.append(deno_psnr.mean().item())
-        nl_psnr_list.append(nl_psnr.mean().item())
-        nn_psnr_list.append(nn_psnr.mean().item())
+        #
+
+        # -- psnr [v1] --
+        deno_psnr = compute_psnrs(deno,clean,True)
+        nl_psnr = compute_psnrs(deno_nl,clean,True)
+        nn_psnr = compute_psnrs(deno_nn,clean,True)
+        for t_p in range(len(deno_psnr)):
+            deno_psnr_list.append(deno_psnr[t_p].item())
+            nl_psnr_list.append(nl_psnr[t_p].item())
+            nn_psnr_list.append(nn_psnr[t_p].item())
+
+        # deno_psnr_list.append(deno_psnr.mean().item())
+        # nl_psnr_list.append(nl_psnr.mean().item())
+        # nn_psnr_list.append(nn_psnr.mean().item())
+
+        # -- psnr [v2] --
+        for t_p in range(len(noisy)):
+            deno_psnr = skimage_psnr(deno[[t_p]],clean[[t_p]],True)
+            nl_psnr = skimage_psnr(deno_nl[[t_p]],clean[[t_p]],True)
+            nn_psnr = skimage_psnr(deno_nn[[t_p]],clean[[t_p]],True)
+            deno_psnr_list.append(deno_psnr)
+            nl_psnr_list.append(nl_psnr)
+            nn_psnr_list.append(nn_psnr)
 
         # -- logging --
         print('')
@@ -158,7 +178,7 @@ def process_video_set_func():
 
     print('')
     print('-' * 90)
-    print('[sigma {}, alpha {:.2f}] deno: {:.2f}, nl: {:.2f}, nn : {:.2f}'.\
+    print('[sigma {}, alpha {:.2f}] deno: {:.3f}, nl: {:.3f}, nn : {:.3f}'.\
         format(opt.sigma,opt.alpha,np.array(deno_psnr_list).mean(),
                np.array(nl_psnr_list).mean(),np.array(nn_psnr_list).mean()
         )
@@ -178,7 +198,7 @@ def process_video_set_func():
 def parse_options():
     parser = argparse.ArgumentParser()
     parser.add_argument('--vid_set', type=str, default='set8', help='name of video')
-    parser.add_argument('--alpha', type=str, default=0.20, help='interolation value')
+    parser.add_argument('--alpha', type=float, default=0.20, help='interolation value')
     parser.add_argument('--verbose', type=bool, default=True, help='print VNLB updates')
     parser.add_argument('--deno_model', type=str, default='pacnet', help='name of cached denoised video as input')
     parser.add_argument('--file_ext', type=str, default='jpg', help='file extension: {jpg, png}')

@@ -131,7 +131,7 @@ def read_udvd_sequence(vid_set,vid_name,sigma,itype,nframes):
         fn = str(fn)
 
         frame = np.load(fn)
-        vid.append(th.from_numpy(frame))
+        vid.append(th.from_numpy(frame).type(th.float32))
 
     vid = th.stack(vid).squeeze()
 

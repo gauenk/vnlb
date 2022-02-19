@@ -41,7 +41,7 @@ def proc_nl(images,flows,args):
     # -- create access mask --
     mask,ngroups = search_mask.init_mask(images.shape,args)
     mask_r = repeat(mask,'t h w -> t c h w',c=3)
-    save_burst(mask_r,"output/mask/","mask")
+    # save_burst(mask_r,"output/mask/","mask")
 
     # -- allocate memory --
     patches = alloc.allocate_patches(args.patch_shape,images.clean,args.device)
@@ -65,7 +65,7 @@ def proc_nl(images,flows,args):
         done = search.exec_search(patches,images,flows,mask,bufs,args)
 
         # -- refinemenent the searching --
-        search.exec_refinement(patches,bufs,args.sigma)
+        # search.exec_refinement(patches,bufs,args.sigma)
 
         # -- flat patches --
         update_flat_patch(patches,args)
@@ -106,6 +106,7 @@ def proc_nl(images,flows,args):
     # -- reweight vals --
     # reweight_vals(images)
     # images.weights[th.where(images.weights<5)]=0
+    # print("sum: ",th.sum(images.weights>0).item())
 
     # -- reweight deno --
     weights = repeat(images.weights,'t h w -> t c h w',c=args.c)

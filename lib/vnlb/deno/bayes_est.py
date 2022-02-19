@@ -42,7 +42,7 @@ def denoise(patches,args):
     bayes_filter_coeff(eigVals,args.sigma2,args.thresh)
 
     # -- filter --
-    filter_patches(patches.basic,covMat,eigVals,eigVecs,args.sigma2,args.rank)
+    filter_patches(patches.noisy,covMat,eigVals,eigVecs,args.sigma2,args.rank)
 
     # -- expand batch and color --
     expand_bdim(patches,args)
@@ -57,7 +57,7 @@ def denoise(patches,args):
     # -- fill? --
     # pnoisy[...] = pbasic[...]#patches.basic[...]
     # pnoisy[...] = patches.noisy[...]
-    patches.noisy[...] = patches.basic[...]#pbasic[...]
+    # patches.noisy[...] = patches.basic[...]#pbasic[...]
 
     return rank_var
 

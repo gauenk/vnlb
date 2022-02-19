@@ -26,7 +26,6 @@ noisy = np.random.normal(clean,scale=std)
 # -- Video Non-Local Bayes --
 deno,basic,dtime = vnlb.denoise(noisy,std,verbose=True)
 
-
 # -- Denoising Quality --
 noisy_psnrs = vnlb.utils.compute_psnrs(clean,noisy)
 basic_psnrs = vnlb.utils.compute_psnrs(clean,basic)

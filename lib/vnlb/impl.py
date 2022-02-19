@@ -61,11 +61,59 @@ def denoise(noisy, sigma, gpuid=0, clean=None, verbose=True):
 
     return deno,basic,tdelta
 
+def deno_n4(noisy, sigma, alpha, vid_name, clipped_noise, gpuid, silent,vid_set="set8",
+            deno_model="pacnet", islice=None, clean=None, verbose=False):
+
+    """
+    Method to be submitted to ECCV 2022
+
+    """
+
+    # -- timing --
+    clock = Timer()
+    clock.tic()
+
+    #
+    # -- proc nn --
+    #
+
+    # -- denoise with model --
+    deno_pac = proc_nn("pacnet",vid_set,vid_name,sigma)
+    deno_pac = deno_pac.to(noisy.device)
+
+    # -- optional slice --
+    if not(islice is None):
+        deno_pac = deno_pac[islice.t,:,islice.h,islice.w]
+
+    #
+    # -- proc nn --
+    #
+
+    # -- denoise with model --
+    deno_udvd = proc_nn("udvd",vid_set,vid_name,sigma)
+    deno_udvd = deno_udvd.to(noisy.device)
+
+    # -- optional slice --
+    if not(islice is None):
+        deno_udvd = deno_udvd[islice.t,:,islice.h,islice.w]
+
+    #
+    # -- interpolate --
+    #
+
+    # -- alpha ave --
+    deno_final = alpha * deno_pac + (1 - alpha) * deno_udvd
+
+    # -- timeit --
+    tdelta = clock.toc()
+
+    return deno_final,deno_pac,deno_udvd,tdelta
+
 
 def deno_n3l(noisy, sigma, alpha, vid_name, clipped_noise, gpuid, silent,vid_set="set8",
              deno_model="pacnet", islice=None, clean=None, verbose=False):
     """
-    Method submitted to ECCV 2022
+    Method to be submitted to ECCV 2022
 
     """
 

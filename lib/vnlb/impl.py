@@ -60,3 +60,71 @@ def denoise(noisy, sigma, gpuid=0, clean=None, verbose=True):
     tdelta = clock.toc()
 
     return deno,basic,tdelta
+
+def denoise_mod(noisy, sigma, gpuid=0, clean=None, verbose=True):
+    """
+    Video Non-Local Bayes (VNLB)
+
+    """
+
+    # -- timing --
+    clock = Timer()
+    clock.tic()
+
+    # -- get device --
+    use_gpu = torch.cuda.is_available() and gpuid >= 0
+    device = 'cuda:%d' % gpuid if use_gpu else 'cpu'
+
+    # -- to tensor --
+    if not th.is_tensor(noisy):
+        noisy = th.from_numpy(noisy).to(device)
+
+    # -- setup vnlb inputs --
+    c = noisy.shape[1]
+    params = get_params(sigma,verbose)
+    flows = alloc.allocate_flows(noisy.shape,noisy.device)
+
+    # -- [step 1] --
+    params['nSimilarPatches'][0] = 10
+    params['cpatches'][0] = "noisy"
+    params['srch_img'][0] = "noisy"
+    images = alloc.allocate_images(noisy,None,clean)
+    args = get_args(params,c,0,noisy.device)
+    proc_nl(images,flows,args)
+    basic = images['deno'].clone()
+
+    # -- [step 2] --
+    alpha = 0.75
+    nsteps = 3
+    for i in range(nsteps):
+        basic = alpha * basic + (1 - alpha) * noisy
+        params['nSimilarPatches'][0] = 2
+        params['cpatches'][0] = "noisy"
+        params['srch_img'][0] = "basic"
+        images = alloc.allocate_images(noisy,basic,clean)
+        args = get_args(params,c,0,noisy.device)
+        proc_nl(images,flows,args)
+        basic = images['deno'].clone()
+
+    params['nSimilarPatches'][0] = 100
+    params['cpatches'][0] = "noisy"
+    params['srch_img'][0] = "basic"
+    images = alloc.allocate_images(noisy,basic,clean)
+    args = get_args(params,c,0,noisy.device)
+    proc_nl(images,flows,args)
+    basic = images['deno'].clone()
+
+    # -- [step 3] --
+    params['nSimilarPatches'][1] = 60
+    params['gamma'][1] = 0.2
+    params['cpatches'][1] = "basic"
+    images = alloc.allocate_images(noisy,basic,clean)
+    args = get_args(params,c,1,noisy.device)
+    proc_nl(images,flows,args)
+    deno = images['deno']
+
+    # -- timeit --
+    tdelta = clock.toc()
+
+    return deno,basic,tdelta
+

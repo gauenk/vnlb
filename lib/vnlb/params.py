@@ -41,6 +41,8 @@ def default_params(sigma,verbose=False):
     params.testing = [False,False]
     params.use_imread = [False,False]
     params.stype = ["l2","l2"]
+    params.srch_img = ["noisy","basic"]
+    params.cpatches = ["noisy","basic"]
     params.var_mode = [0,0]
     params.variThres = [2.7,0.7] # 0.7
     params.verbose = [verbose,verbose]
@@ -50,7 +52,7 @@ def get_params(sigma,verbose=False):
     params = default_params(sigma,verbose)
     # version = "default"
     # version = "exp"
-    version = "sss" # smart-search-space
+    # version = "sss" # smart-search-space
     # version = "sss_v2" # smart-search-space
     version = "iphone"
     print("version: ",version)

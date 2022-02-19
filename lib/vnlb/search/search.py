@@ -71,8 +71,16 @@ def exec_search(patches,imgs,flows,mask,bufs,args):
 def search_and_fill(imgs,patches,bufs,srch_inds,flows,args):
 
     # -- select search image --
-    srch_img = imgs.noisy if args.step == 0 else imgs.basic
-    srch_img = srch_img if (imgs.clean is None) else imgs.clean
+    if args.srch_img == "noisy":
+        srch_img = imgs.noisy
+    elif args.srch_img == "basic":
+        srch_img = imgs.basic
+    elif args.srch_img == "clean":
+        srch_img = imgs.clean
+    else:
+        raise ValueError(f"uknown search image [{srch_img}]")
+    # srch_img = imgs.noisy if args.step == 0 else imgs.basic
+    # srch_img = srch_img if (imgs.clean is None) else imgs.clean
 
     # -- sim search block --
     bufs.inds[...] = -1

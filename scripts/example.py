@@ -18,7 +18,7 @@ th.backends.cudnn.benchmark = False
 # -- get data --
 # clean = vnlb.testing.load_dataset("davis_64x64",vnlb=False)[0]['clean'].copy()[:3]
 clean = vnlb.testing.load_dataset("cup_crop",vnlb=False,nframes=20)[0]['clean'].copy()
-clean = clean[:,:,512+128-32:512+256-32,:128]
+clean = clean[:,:,512+128-32+32:512+256-32,:128-64]
 # (nframes,channels,height,width)
 print("clean.shape: ",clean.shape)
 
@@ -36,9 +36,14 @@ print("std: ",std)
 # print(np.mean((noisy - clean)**2))
 # exit(0)
 
+# 31.415 = standard deno
+# .75 -> 2
+# .75 -> 10
+# .5 -> 2
 
 # -- Video Non-Local Bayes --
-deno,basic,dtime = vnlb.denoise(noisy,std,clean=None,verbose=True)
+# deno,basic,dtime = vnlb.denoise(noisy,std,clean=None,verbose=True)
+deno,basic,dtime = vnlb.denoise_mod(noisy,std,clean=None,verbose=True)
 
 # -- Denoising Quality --
 noisy_psnrs = vnlb.utils.compute_psnrs(clean,noisy)

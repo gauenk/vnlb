@@ -78,7 +78,7 @@ def proc_nl(images,flows,args):
             break
 
         # -- denoise patches --
-        deno.denoise(vpatches,args)
+        deno.denoise(vpatches,args,args.deno)
 
         # -- fill valid --
         fill_valid_patches(vpatches,patches,bufs)

@@ -88,6 +88,7 @@ def denoise_mod(noisy, sigma, gpuid=0, clean=None, verbose=True):
     params['nSimilarPatches'][0] = 10
     params['cpatches'][0] = "noisy"
     params['srch_img'][0] = "noisy"
+    params['deno'][0] = "ave"
     images = alloc.allocate_images(noisy,None,clean)
     args = get_args(params,c,0,noisy.device)
     proc_nl(images,flows,args)
@@ -101,6 +102,7 @@ def denoise_mod(noisy, sigma, gpuid=0, clean=None, verbose=True):
         params['nSimilarPatches'][0] = 2
         params['cpatches'][0] = "noisy"
         params['srch_img'][0] = "basic"
+        params['deno'][0] = "ave"
         images = alloc.allocate_images(noisy,basic,clean)
         args = get_args(params,c,0,noisy.device)
         proc_nl(images,flows,args)
@@ -109,6 +111,7 @@ def denoise_mod(noisy, sigma, gpuid=0, clean=None, verbose=True):
     params['nSimilarPatches'][0] = 100
     params['cpatches'][0] = "noisy"
     params['srch_img'][0] = "basic"
+    params['deno'][0] = "bayes"
     images = alloc.allocate_images(noisy,basic,clean)
     args = get_args(params,c,0,noisy.device)
     proc_nl(images,flows,args)

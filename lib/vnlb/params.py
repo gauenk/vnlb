@@ -43,6 +43,7 @@ def default_params(sigma,verbose=False):
     params.stype = ["l2","l2"]
     params.srch_img = ["noisy","basic"]
     params.cpatches = ["noisy","basic"]
+    params.deno = ["bayes","bayes"]
     params.var_mode = [0,0]
     params.variThres = [2.7,0.7] # 0.7
     params.verbose = [verbose,verbose]

@@ -83,6 +83,9 @@ def get_dataset_info(name):
         path = Path("data/gmobile/")
         print_gmobile_message(path)
         return Path("data/gmobile/"),300,"%03d.png"
+    elif name == "salsa":
+        path = Path("data/davis_salsa/")
+        return path,5,"%05d.jpg"
     else:
         print("Options include:")
         print(menu)

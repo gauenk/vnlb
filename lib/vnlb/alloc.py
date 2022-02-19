@@ -49,6 +49,8 @@ def allocate_images(noisy,basic,clean):
 
     # -- clean --
     imgs.clean = clean
+    if not(clean is None) and not(th.is_tensor(clean)):
+        imgs.clean = th.from_numpy(imgs.clean).to(device)
 
     # -- deno & agg weights --
     imgs.deno = th.zeros((t,c,h,w),dtype=dtype).to(device)

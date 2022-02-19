@@ -8,6 +8,8 @@ import numpy as np
 from einops import rearrange,repeat
 from easydict import EasyDict as edict
 
+import torchvision.utils as tvu
+
 # -- package --
 import vnlb
 from vnlb.testing.file_io import save_images
@@ -72,6 +74,8 @@ def proc_nl(images,flows,args):
 
         # -- valid patches --
         vpatches = get_valid_patches(patches,bufs)
+        if vpatches.shape[0] == 0:
+            break
 
         # -- denoise patches --
         deno.denoise(vpatches,args)
@@ -93,6 +97,8 @@ def proc_nl(images,flows,args):
         msg = "[Pixels %d/%d]: %d" % (nmasked,nelems,delta)
         if args.verbose:
             tqdm.write(msg)
+            # tqdm.write(("done: %d"%done))
+            # tqdm.write(("batches [%d/%d]"% (batch,nbatches)))
             pbar.update(delta)
 
         # -- logging --
@@ -117,6 +123,16 @@ def proc_nl(images,flows,args):
     fill_img = images.basic if args.step==1 else images.noisy
     index = torch.nonzero(weights==0,as_tuple=True)
     images.deno[index] = fill_img[index]
+
+    # -- inspect mask --
+    save_mask = False
+    if save_mask:
+        mask = images.weights == 0
+        print("mask.shape: ",mask.shape)
+        mask = mask.type(th.float)[:,None]
+        print("mask.shape: ",mask.shape,mask.dtype)
+        tvu.save_image(mask,"output/mask.png")
+        exit(0)
 
     # -- color xform --
     utils.yuv2rgb_images(images)
@@ -149,7 +165,7 @@ def fill_valid_patches(vpatches,patches,bufs):
 
 def get_valid_patches(patches,bufs):
     valid = th.nonzero(th.all(bufs.inds!=-1,1),as_tuple=True)
-    nv = len(valid)
+    nv = len(valid[0])
     vpatches = edict()
     for key in patches:
         if (key in patches.tensors) and not(patches[key] is None):

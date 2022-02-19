@@ -6,6 +6,8 @@ import numpy as np
 from einops import rearrange
 from easydict import EasyDict as edict
 
+import torchvision.utils as tvu
+
 # -- logging --
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
@@ -198,6 +200,15 @@ def init_mask(shape,in_params,info=None):
 
     # -- format results --
     mask = th.from_numpy(mask).to(in_params.device)
+
+    # -- inspect mask --
+    save_mask = False
+    if save_mask:
+        print("mask.shape: ",mask.shape)
+        mask = mask.type(th.float)[:,None]
+        print("mask.shape: ",mask.shape,mask.dtype)
+        tvu.save_image(mask,"output/mask.png")
+        exit(0)
 
     return mask,ngroups
 

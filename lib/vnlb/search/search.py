@@ -77,7 +77,9 @@ def search_and_fill(imgs,patches,bufs,srch_inds,flows,args):
     # -- sim search block --
     bufs.inds[...] = -1
     bufs.vals[...] = float("inf")
-    # args.stype = "needle"
+    # args.ipos = "top-left" # index is not centered
+    # args.stype = "needle" if args.step == 0 else "l2"
+    args.stype = "l2"
     vpss.exec_sim_search_burst(srch_img,srch_inds,bufs.vals,
                                bufs.inds,flows,args.sigma,args)
     # -- fill patches --

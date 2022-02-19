@@ -17,7 +17,7 @@ def default_params(sigma,verbose=False):
     params.coupleChannels = [False,False]
     params.device = ['cpu','cpu']
     params.flatAreas = [False,True]
-    params.gamma = [0.95, 0.95]
+    params.gamma = [0.95, 0.2]
     params.isFirstStep = [True,False]
     params.mod_sel = ["clipped","clipped"]
     params.nParts = [-1,-1]
@@ -51,8 +51,9 @@ def get_params(sigma,verbose=False):
     version = "exp"
     if version == "exp":
         params['nSimilarPatches'][0] = 100
-        params['nSimilarPatches'][1] = 10
+        params['nSimilarPatches'][1] = 60
         params['sizePatch'] = [7,7]
+        params['sizePatchTime'] = [2,2]
     # params['gamma'][1] = 1.00
     # params['useWeights'] = [False,False]
     # params['simPatchRefineKeep'] = [100,100]
@@ -123,6 +124,8 @@ def get_args(params,c,step,device):
         def ps(self): return self.sizePatch
         @property
         def ps_t(self): return self.sizePatchTime
+        @property
+        def pt(self): return self.sizePatchTime
         @property
         def npatches(self): return self.nSimilarPatches
         @property

@@ -20,11 +20,11 @@ clean = vnlb.testing.load_dataset("davis_64x64",vnlb=False)[0]['clean'].copy()[:
 # (nframes,channels,height,width)
 
 # -- add noise --
-std = 20.
+std = 30.
 noisy = np.random.normal(clean,scale=std)
 
 # -- Video Non-Local Bayes --
-deno,basic,dtime = vnlb.denoise(noisy,std,verbose=True)
+deno,basic,dtime = vnlb.denoise(noisy,std,clean=None,verbose=True)
 
 # -- Denoising Quality --
 noisy_psnrs = vnlb.utils.compute_psnrs(clean,noisy)

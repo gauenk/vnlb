@@ -56,7 +56,7 @@ print("Execution Time (s): %2.2e" % dtime)
 Comparing with C++ Code
 ---
 
-The outputs from this VNLB code and the C++ Code are almost equal. The primary difference between to two method is the way in which we achieve parallelism. This difference impacts the final PSNR, especially on smaller images. More details are [included in docs/COMPARE.md](https://github.com/gauenk/vnlb/blob/master/docs/COMPARE.md).
+The outputs from this VNLB code and the C++ Code are almost equal. The primary difference between to two method is the way in which we achieve parallelism. This difference impacts the final PSNR, especially on smaller images. More details are [included in docs/COMPARE.md](https://github.com/gauenk/vnlb/blob/master/docs/COMPARE.md). Note too there is no optical flow computed within this method to account for large motion changes. This must be computed separately and passed to the function call.
 
 
 Credits

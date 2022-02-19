@@ -86,6 +86,9 @@ def get_dataset_info(name):
     elif name == "salsa":
         path = Path("data/davis_salsa/")
         return path,5,"%05d.jpg"
+    elif name == "cup_crop":
+        path = Path("data/cup_crop/")
+        return path,20,"%05d.png"
     else:
         print("Options include:")
         print(menu)

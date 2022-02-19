@@ -40,6 +40,7 @@ def default_params(sigma,verbose=False):
     params.tau = [0,400.]
     params.testing = [False,False]
     params.use_imread = [False,False]
+    params.stype = ["l2","l2"]
     params.var_mode = [0,0]
     params.variThres = [2.7,0.7] # 0.7
     params.verbose = [verbose,verbose]
@@ -47,13 +48,44 @@ def default_params(sigma,verbose=False):
 
 def get_params(sigma,verbose=False):
     params = default_params(sigma,verbose)
-    version = "default"
-    version = "exp"
+    # version = "default"
+    # version = "exp"
+    version = "sss" # smart-search-space
+    # version = "sss_v2" # smart-search-space
+    # version = "iphone"
+    # print("version: ",version)
     if version == "exp":
         params['nSimilarPatches'][0] = 100
         params['nSimilarPatches'][1] = 60
         params['sizePatch'] = [7,7]
         params['sizePatchTime'] = [2,2]
+    elif version == "sss":
+        params['nSimilarPatches'][0] = 100
+        params['nSimilarPatches'][1] = 60
+        params['sizePatch'] = [7,7]
+        params['sizePatchTime'] = [2,2]
+        params['stype'] = ["l2","l2"]
+        params.sizeSearchTimeBwd = [10,10]
+        params.sizeSearchTimeFwd = [10,10]
+        params.sizeSearchWindow = [15,15]
+    elif version == "sss_v2":
+        params['nSimilarPatches'][0] = 100
+        params['nSimilarPatches'][1] = 60
+        params['sizePatch'] = [7,7]
+        params['sizePatchTime'] = [1,2] # pt = 1
+        params['stype'] = ["l2","l2"]
+        params.sizeSearchTimeBwd = [10,10]
+        params.sizeSearchTimeFwd = [10,10]
+        params.sizeSearchWindow = [15,15]
+    elif version == "iphone":
+        params['nSimilarPatches'][0] = 100
+        params['nSimilarPatches'][1] = 60
+        params['sizePatch'] = [7,7]
+        params['sizePatchTime'] = [1,2]
+        params['stype'] = ["needle","l2"]
+        params.sizeSearchTimeBwd = [10,10]
+        params.sizeSearchTimeFwd = [10,10]
+        params.sizeSearchWindow = [15,15]
     # params['gamma'][1] = 1.00
     # params['useWeights'] = [False,False]
     # params['simPatchRefineKeep'] = [100,100]

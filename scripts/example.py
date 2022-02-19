@@ -16,12 +16,24 @@ th.backends.cudnn.deterministic = True
 th.backends.cudnn.benchmark = False
 
 # -- get data --
-clean = vnlb.testing.load_dataset("davis_64x64",vnlb=False)[0]['clean'].copy()[:3]
+# clean = vnlb.testing.load_dataset("davis_64x64",vnlb=False)[0]['clean'].copy()[:3]
+clean = vnlb.testing.load_dataset("cup_crop",vnlb=False,nframes=20)[0]['clean'].copy()
+clean = clean[:,:,512+128-32:512+256-32,:128]
 # (nframes,channels,height,width)
+print("clean.shape: ",clean.shape)
+
 
 # -- add noise --
-std = 30.
+std = 50.
+alpha = 20.
 noisy = np.random.normal(clean,scale=std)
+# noisy = np.random.poisson(alpha*clean/255.)*255./alpha
+std = (noisy-clean).std()
+print("std: ",std)
+# print(np.c_[clean.ravel(),noisy.ravel()])
+# print(np.mean((noisy - clean)**2))
+# exit(0)
+
 
 # -- Video Non-Local Bayes --
 deno,basic,dtime = vnlb.denoise(noisy,std,clean=None,verbose=True)
@@ -32,9 +44,9 @@ basic_psnrs = vnlb.utils.compute_psnrs(clean,basic)
 deno_psnrs = vnlb.utils.compute_psnrs(clean,deno)
 
 print("Denoised PSNRs:")
-print(deno_psnrs)
+print(deno_psnrs,deno_psnrs.mean())
 print("Basic PSNRs:")
-print(basic_psnrs)
+print(basic_psnrs,basic_psnrs.mean())
 print("Noisy PSNRs:")
 print(noisy_psnrs)
 print("Exec Time (sec): %2.2e" % dtime)

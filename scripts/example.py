@@ -25,8 +25,10 @@ print("clean.shape: ",clean.shape)
 
 # -- add noise --
 std = 50.
+std_r = 10.
 alpha = 20.
 noisy = np.random.normal(clean,scale=std)
+# noisy = np.random.normal(clean,scale=std) + clean*np.random.normal(clean,scale=1.)
 # noisy = np.random.poisson(alpha*clean/255.)*255./alpha
 std = (noisy-clean).std()
 print("std: ",std)

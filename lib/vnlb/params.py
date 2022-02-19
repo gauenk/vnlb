@@ -52,8 +52,8 @@ def get_params(sigma,verbose=False):
     # version = "exp"
     version = "sss" # smart-search-space
     # version = "sss_v2" # smart-search-space
-    # version = "iphone"
-    # print("version: ",version)
+    version = "iphone"
+    print("version: ",version)
     if version == "exp":
         params['nSimilarPatches'][0] = 100
         params['nSimilarPatches'][1] = 60

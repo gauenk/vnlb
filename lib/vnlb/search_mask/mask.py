@@ -34,11 +34,10 @@ def update_mask(mask,access,val=0):
     assert access.shape[1] == 3
     mask[access[:,0],access[:,1],access[:,2]] = val
 
-def update_mask_inds(mask,inds,chnls,cs_ptr=None,boost=True,val=0,nkeep=-1):
+def update_mask_inds(mask,inds,chnls,nkeep=-1,cs_ptr=None,boost=True,val=0):
 
     # -- shape --
     t,h,w = mask.shape
-    bsize,num = inds.shape
     hw,chw = h*w,chnls*h*w
 
     # -- init cs_ptr --
@@ -60,17 +59,11 @@ def update_mask_inds(mask,inds,chnls,cs_ptr=None,boost=True,val=0,nkeep=-1):
     if inds.shape[0] == 0: return
 
     # -- augment inds --
-    aug_inds = th.zeros((3,f_bsize,num),dtype=th.int64)
-    aug_inds = aug_inds.to(inds.device)
+    # aug_inds = th.zeros((3,f_bsize,num),dtype=th.int64)
+    # aug_inds = aug_inds.to(inds.device)
+    aug_inds = get_3d_inds(inds,chnls,h,w)
 
     # -- (one #) -> (three #s) --
-    tdiv = th.div
-    tmod = th.remainder
-    aug_inds[0,...] = tdiv(inds,chw,rounding_mode='floor') # inds // chw
-    aug_inds[1,...] = tdiv(tmod(inds,hw),w,rounding_mode='floor') # (inds % hw) // w
-    aug_inds[2,...] = tmod(inds,w)
-    aug_inds = rearrange(aug_inds,'three b n -> (b n) three')
-
     # if f_bsize < 10:
     #     print("-- inds --")
     #     print(inds[:,0])
@@ -84,6 +77,29 @@ def update_mask_inds(mask,inds,chnls,cs_ptr=None,boost=True,val=0,nkeep=-1):
 
     # -- assign mask info --
     update_mask(mask,aug_inds,val)
+
+def get_3d_inds(inds,c,h,w):
+
+    # -- unpack --
+    chw,hw = c*h*w,h*w
+    bsize,num = inds.shape
+    device = inds.device
+
+    # -- shortcuts --
+    tdiv = th.div
+    tmod = th.remainder
+
+    # -- init --
+    aug_inds = th.zeros((3,bsize,num),dtype=th.int64)
+    aug_inds = aug_inds.to(inds.device)
+
+    # -- fill --
+    aug_inds[0,...] = tdiv(inds,chw,rounding_mode='floor') # inds // chw
+    aug_inds[1,...] = tdiv(tmod(inds,hw),w,rounding_mode='floor') # (inds % hw) // w
+    aug_inds[2,...] = tmod(inds,w)
+    aug_inds = rearrange(aug_inds,'three b n -> (b n) three')
+
+    return aug_inds
 
 def expand_inds(inds,t,c,h,w):
 

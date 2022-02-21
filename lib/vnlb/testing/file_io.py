@@ -89,10 +89,16 @@ def get_dataset_info(name):
     elif name == "cup_crop":
         path = Path("data/cup_crop/")
         return path,20,"%05d.png"
+    elif name == "candles":
+        path = Path("data/candles/")
+        return path,30,"%05d.png"
     else:
-        print("Options include:")
-        print(menu)
-        raise ValueError(f"Uknown dataset name {name}")
+        print("guessing default.")
+        path = Path("data/%s/" % name)
+        return path,30,"%05d.png"
+        # print("Options include:")
+        # print(menu)
+        # raise ValueError(f"Uknown dataset name {name}")
 
 def print_davis_64x64_message(path):
     if not path.exists():

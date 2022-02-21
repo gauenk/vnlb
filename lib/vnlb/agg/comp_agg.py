@@ -9,7 +9,9 @@ from einops import rearrange
 from numba import njit,cuda
 
 # -- package --
+import vnlb.search_mask as imask
 from vnlb.utils import groups2patches
+from vnlb.utils import Timer
 
 def computeAggregation(deno,group,indices,weights,mask,nSimP,params=None,step=0):
 
@@ -44,6 +46,7 @@ def computeAggregation(deno,group,indices,weights,mask,nSimP,params=None,step=0)
 
     return results
 
+@Timer("agg_patches")
 def agg_patches(patches,images,bufs,args,cs_ptr=None):
 
     # -- default stream --
@@ -56,8 +59,37 @@ def agg_patches(patches,images,bufs,args,cs_ptr=None):
     vinds = bufs.inds[valid]
     vvals = bufs.vals[valid]
 
-    return compute_agg_batch(images.deno,vnoisy,vinds,images.weights,
-                             vvals,images.vals,args.ps,args.ps_t,cs_ptr)
+    # -- iterate over "nkeep" --
+    if args.nkeep != -1:
+        vinds = bufs.inds[:,:args.nkeep]
+
+    # if args.nkeep == 1:
+    #     # deno[t1,ci,h1,w1] += gval
+    #     # weights[t1,h1,w1] += 1.
+    #     scatter_agg(images.deno,vnoisy,vinds,images.weights,
+    #                 vvals,images.vals,args.ps,args.ps_t,cs_ptr)
+    #     # return compute_agg_batch_single(images.deno,vnoisy,vinds,images.weights,
+    #     #                                 vvals,images.vals,args.ps,args.ps_t,cs_ptr)
+    # else:
+    compute_agg_batch(images.deno,vnoisy,vinds,images.weights,
+                      vvals,images.vals,args.ps,args.ps_t,cs_ptr)
+
+def scatter_agg(deno,patches,inds,weights,vals,ivals,ps,ps_t,cs_ptr):
+
+    print("deno.shape: ",deno.shape)
+    print("weights.shape: ",weights.shape)
+    print("inds.shape: ",inds.shape)
+    # inds3d = th.zeros((inds.shape[0],3))
+    # inds =
+    # deno[t1,ci,h1,w1] += gval
+    # weights[t1,h1,w1] += 1.
+    t,c,h,w = deno.shape
+    aug_inds = imask.get_3d_inds(inds,c,h,w)
+    print("aug_inds.shape: ",aug_inds.shape)
+    print("patches.shape: ",patches.shape)
+    # for ci in range(c):
+    #     th.scatter_add(deno,
+
 
 def compute_agg_batch(deno,patches,inds,weights,vals,ivals,ps,ps_t,cs_ptr):
 
@@ -72,10 +104,13 @@ def compute_agg_batch(deno,patches,inds,weights,vals,ivals,ps,ps_t,cs_ptr):
 
     # -- launch params --
     bsize,num = inds.shape
-    threads = num
-    blocks = bsize
+    c,ph,pw = patches.shape[-3:]
+    threads = (c,ph,pw)
+    blocks = (bsize,num)
 
     # -- launch kernel --
+    # exec_agg_cuda[blocks,threads,cs_nba](deno_nba,patches_nba,inds_nba,weights_nba,
+    #                                      vals_nba_,ivals_nba,ps,ps_t)
     exec_agg_simple(deno,patches,inds,weights,vals,ivals,ps,ps_t)
 
 
@@ -110,7 +145,7 @@ def exec_agg_simple_numba(deno,patches,inds,weights,vals,ivals,ps,ps_t):
     nframes,color,height,width = deno.shape
     chw = color*height*width
     hw = height*width
-    bsize,npatches = inds.shape
+    bsize,npatches = inds.shape # "npatches" _must_ be from "inds"
 
     for bi in range(bsize):
         for ni in range(npatches):
@@ -140,8 +175,11 @@ def exec_agg_simple_numba(deno,patches,inds,weights,vals,ivals,ps,ps_t):
                         #     ivals[t0+pt,h0+pi,w0+pj] += vals[bi,ni]
 
 
+def exec_agg_cuda_launcher(deno,patches,inds,weights,ps,ps_t):
+    pass
+
 @cuda.jit(max_registers=64)
-def exec_agg(deno,patches,inds,weights,ps,ps_t):
+def exec_agg_cuda(deno,patches,inds,weights,ps,ps_t):
 
     # -- shape --
     nframes,color,height,width = deno.shape
@@ -150,11 +188,11 @@ def exec_agg(deno,patches,inds,weights,ps,ps_t):
     t_bsize = inds.shape[1]
 
     # -- access with blocks and threads --
-    hi = cuda.blockIdx.x
-    wi = cuda.blockIdx.y
-
-    # -- cuda threads --
-    pindex = cuda.threadIdx.x
+    bidx = cuda.blockIdx.x
+    nidx = cuda.blockIdx.y
+    tidx = cuda.threadIdx.x
+    hidx = cuda.threadIdx.y
+    widx = cuda.threadIdx.z
 
     # -> race condition across "batches [t,h,w]"
     # -- we want enough work per thread, so we keep the "t" loop --
@@ -185,10 +223,6 @@ def exec_agg(deno,patches,inds,weights,ps,ps_t):
                     # weights[t0,h0,w0] += 1.
                     # weights[t0+pt,h0+pi,w0+pj] += 1.
 
-
-# @njit
-# def exec_aggregation_batch(deno,patches,indices,weights,mask,
-#                            ps,ps_t,onlyFrame,aggreBoost):
 
 
 @njit

@@ -24,7 +24,7 @@ def default_params(sigma,verbose=False):
     params.nThreads = [-1,-1]
     params.nSimilarPatches = [100,60]
     params.nkeep = [-1,-1]
-    params.nstreams = [8,18]
+    params.nstreams = [15,15]
     params.offset = [2*(sigma/255.)**2,0.]
     params.onlyFrame = [-1,-1]
     params.procStep = [3,3]
@@ -54,8 +54,10 @@ def get_params(sigma,verbose=False):
     # version = "default"
     # version = "exp"
     # version = "sss" # smart-search-space
-    # version = "sss_v2" # smart-search-space
-    version = "iphone"
+    # version = "sss_v3" # smart-search-space
+    version = "sss_v4" # smart-search-space
+    # version = "iphone"
+    # version = "iphone_v2"
     print("version: ",version)
     if version == "exp":
         params['nSimilarPatches'][0] = 100
@@ -80,6 +82,24 @@ def get_params(sigma,verbose=False):
         params.sizeSearchTimeBwd = [10,10]
         params.sizeSearchTimeFwd = [10,10]
         params.sizeSearchWindow = [15,15]
+    elif version == "sss_v3":
+        params['nSimilarPatches'][0] = 100
+        params['nSimilarPatches'][1] = 60
+        params['sizePatch'] = [7,7]
+        params['sizePatchTime'] = [2,2] # pt = 1
+        params['stype'] = ["l2","l2"]
+        params.sizeSearchTimeBwd = [20,20]
+        params.sizeSearchTimeFwd = [20,20]
+        params.sizeSearchWindow = [15,15]
+    elif version == "sss_v4":
+        params['nSimilarPatches'][0] = 100
+        params['nSimilarPatches'][1] = 60
+        params['sizePatch'] = [7,7]
+        params['sizePatchTime'] = [2,2] # pt = 1
+        params['stype'] = ["l2","l2"]
+        params.sizeSearchTimeBwd = [30,30]
+        params.sizeSearchTimeFwd = [30,30]
+        params.sizeSearchWindow = [10,10]
     elif version == "iphone":
         params['nSimilarPatches'][0] = 100
         params['nSimilarPatches'][1] = 60
@@ -88,6 +108,15 @@ def get_params(sigma,verbose=False):
         params['stype'] = ["needle","l2"]
         params.sizeSearchTimeBwd = [10,10]
         params.sizeSearchTimeFwd = [10,10]
+        params.sizeSearchWindow = [15,15]
+    elif version == "iphone_v2":
+        params['nSimilarPatches'][0] = 100
+        params['nSimilarPatches'][1] = 60
+        params['sizePatch'] = [7,7]
+        params['sizePatchTime'] = [1,2]
+        params['stype'] = ["needle","l2"]
+        params.sizeSearchTimeBwd = [30,30]
+        params.sizeSearchTimeFwd = [30,30]
         params.sizeSearchWindow = [15,15]
     # params['gamma'][1] = 1.00
     # params['useWeights'] = [False,False]
@@ -201,7 +230,7 @@ def get_args(params,c,step,device):
     params.step = [0,1]
     params.c = [c,c]
     params.nstreams = [int(x) for x in optional(params,'nstreams',[1,18])]
-    params.nkeep = [int(x) for x in optional(params,'simPatchRefineKeep',[-1,-1])]
+    params.nkeep = [int(x) for x in optional(params,'nkeep',[-1,-1])]
     params.offset = [float(x) for x in optional(params,'offset',offsets)]
     params.bsize = [int(x) for x in optional(params,'bsize',[8,8])]
     params.nfilter = [int(x) for x in optional(params,'nfilter',[-1,-1])]

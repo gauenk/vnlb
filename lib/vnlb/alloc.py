@@ -63,12 +63,15 @@ def allocate_images(noisy,basic,clean):
 
     return imgs
 
-def allocate_flows(shape,device):
+def allocate_flows(flows,shape,device):
     t,c,h,w = shape
-    flows = edict()
-    zflow = th.zeros((t,2,h,w)).to(device)
-    flows.fflow = zflow
-    flows.bflow = zflow.clone()
+    if flows is None:
+        flows = edict()
+        zflow = th.zeros((t,2,h,w)).to(device)
+        flows.fflow = zflow
+        flows.bflow = zflow.clone()
+    else:
+        flows = edict({k:v.to(device) for k,v in flows.items()})
     return flows
 
 def allocate_bufs(shape,device):

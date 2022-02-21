@@ -20,8 +20,10 @@ import vnlb.search_mask as search_mask
 from vnlb.utils.batching import view_batch
 from vnlb.utils.logger import vprint
 from vnlb.utils import divUp
+from vnlb.utils import Timer
 
 # -- searching --
+@Timer("exec_search")
 def exec_search(patches,imgs,flows,mask,bufs,args):
 
     # -- setup --
@@ -57,7 +59,7 @@ def exec_search(patches,imgs,flows,mask,bufs,args):
 
         # -- update mask naccess --
         before = mask.sum().item()
-        search_mask.update_mask_inds(mask,vbufs.inds,args.c)
+        search_mask.update_mask_inds(mask,vbufs.inds,args.c,args.nkeep)
         after = mask.sum().item()
 
         # -- wait for all streams --

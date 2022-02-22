@@ -24,7 +24,8 @@ th.backends.cudnn.benchmark = False
 # clean = vnlb.testing.load_dataset("cup_crop",vnlb=False,nframes=30)[0]['clean'].copy()
 # clean = vnlb.testing.load_dataset("candles",vnlb=False,nframes=30)[0]['clean'].copy()
 # clean = vnlb.testing.load_dataset("buildings",vnlb=False,nframes=30)[0]['clean'].copy()
-clean = vnlb.testing.load_dataset("brickwall",vnlb=False,nframes=30)[0]['clean'].copy()
+# clean = vnlb.testing.load_dataset("brickwall",vnlb=False,nframes=30)[0]['clean'].copy()
+clean = vnlb.testing.load_dataset("pinecone_brick",vnlb=False,nframes=30)[0]['clean']
 # clean = clean[:,:,512+128-32+32:512+256-32,:128-64]
 # clean = clean[:,:,200:328,-128-64:-64]
 # clean = clean[:,:,264:328,-128-64:-64]
@@ -35,14 +36,15 @@ clean = th.from_numpy(clean)/255.
 clean = tnnf.interpolate(clean,scale_factor=0.2,mode="bicubic",align_corners=False)
 clean *= 255.
 clean = clean.numpy()
+# clean = clean[:,:,32:128+32,128+16:128+128+16] # default
+clean = clean[:,:,32:64+32,128+16:128+64+16]
 print("clean.shape: ",clean.shape)
-clean = clean[:,:,:96,:64]
 
 
 # -- Compute Flows --
-ftype = "comp"
+# ftype = "comp"
 # ftype = "load"
-# ftype = "none"
+ftype = "none"
 if ftype == "comp":
     fflow,bflow = raft.burst2flow(clean)
     th.save(fflow,"fflow.pth")
@@ -86,8 +88,9 @@ th.save(noisy,"noisy.pth")
 # .5 -> 2
 
 # -- Video Non-Local Bayes --
-deno,basic,dtime = vnlb.denoise(noisy,std,flows=flows,clean=clean,verbose=True)
-# deno,basic,dtime = vnlb.denoise_mod(noisy,std,flows=flows,clean=None,verbose=True)
+
+# deno,basic,dtime = vnlb.denoise(noisy,std,flows=flows,clean=None,verbose=True)
+deno,basic,dtime = vnlb.denoise_mod(noisy,std,flows=flows,clean=clean,verbose=True)
 
 # -- Denoising Quality --
 noisy_psnrs = vnlb.utils.compute_psnrs(clean,noisy)

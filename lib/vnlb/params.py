@@ -54,10 +54,13 @@ def get_params(sigma,verbose=False):
     # version = "default"
     # version = "exp"
     # version = "sss" # smart-search-space
+    # version = "sss_v2" # smart-search-space
     # version = "sss_v3" # smart-search-space
-    version = "sss_v4" # smart-search-space
+    # version = "sss_v4" # smart-search-space
+    # version = "sss_v5" # smart-search-space
+    # version = "sss_v6" # smart-search-space
     # version = "iphone"
-    # version = "iphone_v2"
+    version = "iphone_v2"
     print("version: ",version)
     if version == "exp":
         params['nSimilarPatches'][0] = 100
@@ -95,16 +98,34 @@ def get_params(sigma,verbose=False):
         params['nSimilarPatches'][0] = 100
         params['nSimilarPatches'][1] = 60
         params['sizePatch'] = [7,7]
+        params['sizePatchTime'] = [1,2] # pt = 1
+        params['stype'] = ["l2","l2"]
+        params.sizeSearchTimeBwd = [20,20]
+        params.sizeSearchTimeFwd = [20,20]
+        params.sizeSearchWindow = [15,15]
+    elif version == "sss_v5":
+        params['nSimilarPatches'][0] = 100
+        params['nSimilarPatches'][1] = 60
+        params['sizePatch'] = [7,7]
+        params['sizePatchTime'] = [1,2] # pt = 1
+        params['stype'] = ["needle","l2"]
+        params.sizeSearchTimeBwd = [20,20]
+        params.sizeSearchTimeFwd = [20,20]
+        params.sizeSearchWindow = [15,15]
+    elif version == "sss_v6":
+        params['nSimilarPatches'][0] = 100
+        params['nSimilarPatches'][1] = 60
+        params['sizePatch'] = [7,7]
         params['sizePatchTime'] = [2,2] # pt = 1
         params['stype'] = ["l2","l2"]
         params.sizeSearchTimeBwd = [30,30]
         params.sizeSearchTimeFwd = [30,30]
-        params.sizeSearchWindow = [10,10]
+        params.sizeSearchWindow = [15,15]
     elif version == "iphone":
         params['nSimilarPatches'][0] = 100
         params['nSimilarPatches'][1] = 60
         params['sizePatch'] = [7,7]
-        params['sizePatchTime'] = [1,2]
+        params['sizePatchTime'] = [2,2]
         params['stype'] = ["needle","l2"]
         params.sizeSearchTimeBwd = [10,10]
         params.sizeSearchTimeFwd = [10,10]

@@ -163,6 +163,12 @@ def fill_valid_patches(vpatches,patches,bufs):
         if (key in patches.tensors) and not(patches[key] is None):
             patches[key][valid] = vpatches[key]
 
+def get_valid_vals(bufs):
+    valid = th.nonzero(th.all(bufs.inds!=-1,1),as_tuple=True)
+    nv = len(valid[0])
+    vals = bufs.vals[valid]
+    return vals
+
 def get_valid_patches(patches,bufs):
     valid = th.nonzero(th.all(bufs.inds!=-1,1),as_tuple=True)
     nv = len(valid[0])
@@ -173,7 +179,6 @@ def get_valid_patches(patches,bufs):
         else:
             vpatches[key] = patches[key]
     vpatches.shape[0] = nv
-
     return vpatches
 
 def proc_nl_cache(vid_set,vid_name,sigma):

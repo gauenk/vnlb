@@ -70,7 +70,7 @@ def read_flo_file(filename):
 #
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-def get_dataset_info(name):
+def get_dataset_info(name,ext="png"):
     if name == "davis_64x64":
         path = Path("data/davis_baseball_64x64/")
         print_davis_64x64_message(path)
@@ -95,7 +95,7 @@ def get_dataset_info(name):
     else:
         print("guessing default.")
         path = Path("data/%s/" % name)
-        return path,30,"%05d.png"
+        return path,30,"%05d." + ext
         # print("Options include:")
         # print(menu)
         # raise ValueError(f"Uknown dataset name {name}")

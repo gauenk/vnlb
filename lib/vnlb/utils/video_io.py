@@ -4,15 +4,63 @@ import os
 import gc
 from skimage.restoration import estimate_sigma
 
+import shutil
 from pathlib import Path
 
 import numpy as np
 import torch as th
 from einops import rearrange
 
+#
+# Save a Frame from "Proc. Video. Set."
+#
+
+def save_frame_jpg(opt,vid_name,save_images,method_name=None):
+    # -- setup --
+    clip_str = 'clip_' if opt.clipped_noise else ''
+
+    #
+    # -- setup dirs --
+    #
+
+    # -- save root --
+    jpg_folder = Path(opt.jpg_out_folder)
+    if not(method_name is None):
+        jpg_folder = jpg_folder / method_name
+    if not jpg_folder.exists():
+        jpg_folder.mkdir(parents=True)
+
+    # -- each save image --
+    for iname in save_images:
+
+        # -- get image --
+        image = save_images[iname]
+        nframes = image.shape[0]
+
+        # -- path --
+        folder_jpg = jpg_folder / ('%s' % opt.vid_set)
+        folder_jpg /= '%s_%s%d' % (iname,clip_str,opt.sigma)
+        if not(folder_jpg.exists()):
+            folder_jpg.mkdir(parents=True)
+
+        # -- video name --
+        folder_jpg /= vid_name
+        if iname == "deno" and "alpha" in opt:
+            folder_jpg /= "alpha_%d" % (int(opt.alpha*100))
+        if folder_jpg.exists():
+            shutil.rmtree(str(folder_jpg))
+        folder_jpg.mkdir(parents=True)
+
+        for t in range(nframes):
+            fid = '/{:05}.jpg'.format(t)
+            save_image(image[t, ...],str(folder_jpg),fid)
+            fid = '/{:05}.npy'.format(t)
+            save_numpy(image[t, ...],str(folder_jpg),fid)
+
 
 def read_video_sequence(folder_name, max_frame_num, file_ext):
     frame_name = folder_name + '{:05}.{}'.format(0, file_ext)
+    print(frame_name)
     frame = cv2.imread(frame_name, cv2.IMREAD_COLOR)
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     frame = (np.transpose(np.atleast_3d(frame), (2, 0, 1)) / 255).astype(np.float32)

@@ -13,8 +13,8 @@ from .file_io import get_dataset_info,read_result,format_vnlb_results
 #
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-def load_dataset(name,fstart=0,nframes=5,vnlb=True):
-    path,fmax,fmt = get_dataset_info(name)
+def load_dataset(name,fstart=0,nframes=5,vnlb=True,ext="png"):
+    path,fmax,fmt = get_dataset_info(name,ext)
     return load_data(path,fmax,fmt,fstart,nframes,vnlb)
 
 def load_data(path,fmax,fmt,fstart,nframes,vnlb):

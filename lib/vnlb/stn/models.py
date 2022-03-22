@@ -126,6 +126,21 @@ class SingleSTN(nn.Module):
         x = F.grid_sample(x, ugrid, mode="bicubic")
         return x
 
+    def align_loss_ransac(self, burst, clean=None):
+        t,c,h,w = burst.shape
+
+        # -- warp loss --
+        warp = self.forward(burst)
+        offset = 0#2*(30./255.)**2
+        tloss = self.warp_loss_ransac(warp,burst,offset)
+
+        # warp_s = self.apply_pool(warp,3,3)
+        # burst_s = self.apply_pool(burst,3,3)
+        # offset = 0#2*(30./255.)**2/9.
+        # tloss += self.warp_loss(warp_s,burst_s,offset)
+
+        return tloss
+
     def align_loss(self, burst, clean=None):
         t,c,h,w = burst.shape
 
@@ -165,6 +180,22 @@ class SingleSTN(nn.Module):
         # -- smooth grid --
 
         return tloss
+
+    def warp_loss_ransac(self,warp,burst,offset):
+        ssize = 2
+        nsubsets = 3
+        dwarp = 0
+        nframes = int(warp.shape[0])
+        for s in range(nsubsets):
+            index_a = torch.randperm(nframes)[:ssize]
+            group_a = warp[index_a].mean(0,keepdim=True)
+            index_b = torch.randperm(nframes)[:ssize]
+            group_b = warp[index_b].mean(0,keepdim=True)
+            delta = (group_a - group_b)**2
+            delta += (burst[[self.ref]] - group_a)**2
+            delta += (burst[[self.ref]] - group_b)**2
+            dwarp += delta.mean()
+        return dwarp
 
     def warp_loss(self,warp,burst,offset):
         mwarp = warp[0:].mean(0,keepdim=True)

@@ -1,4 +1,5 @@
 from .bayes_est import denoise as bayes_denoise
+from .tiny_eigh import run_tiny_eigh,patches2cov,cov2eigs
 from vnlb.utils import Timer
 
 

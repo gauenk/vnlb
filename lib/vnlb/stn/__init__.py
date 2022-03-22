@@ -6,6 +6,65 @@ import torch.optim as optim
 # -- local imports --
 from .models import SingleSTN
 from vnlb.utils import save_image,compute_psnrs
+from .unet import UNet
+
+def stn_denoise(images,args):
+
+    model_d = UNet_n2n(1)
+    noisy = images.noisy
+
+    # -- training ---
+    niters = 100
+    for i in range(niters):
+
+        # -- align --
+        model_a = SingleSTN(sigma, ref, shape, device)
+
+    return deno
+
+def fit_align_model(ref,sigma,shape,device):
+    # -- create model --
+    model = SingleSTN(sigma, ref, shape, device)
+    optimizer = optim.Adam(model.parameters(),lr=1e-4)
+    scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.95)
+
+    # -- run steps --
+    loss_prev = 10000
+    niters = 1000
+    for i in range(niters):
+
+        # -- scheduler --
+        if (i % 10) == 0 and i > 100:
+            scheduler.step()
+
+        # -- zero grad --
+        optimizer.zero_grad()
+        model.zero_grad()
+
+        # -- state loss --
+        loss = model.align_loss(burst)
+        if i % 100 == 0:
+            print("loss.item(): ",loss.item())
+
+        # -- info --
+        if i in [0]:
+            # -- Save Examples --
+            warped = model(burst).detach()
+            path = "output/example/"
+            nframes = warped.shape[0]
+            for t in range(nframes):
+                fn = "iter_%d_warped_%05d.png" % (i,t)
+                save_image(warped[t],path,fn)
+
+        # -- update --
+        loss.backward()
+        optimizer.step()
+
+        # -- dloss --
+        dloss = abs(loss.item() - loss_prev)
+        loss_prev = loss.item()
+    R = model.parameters()
+    return R
 
 def stn_basic_est(images,args):
 
@@ -35,8 +94,8 @@ def stn_basic_est_ref(images,args,ref,sigma):
     # -- unpack --
     if images.basic is None: burst = images.noisy/255.
     else: burst = images.basic/255.
-    burst = images.clean/255.
-    sigma = 0.
+    # burst = images.clean/255.
+    # sigma = 0.
     burst = burst.double()
     device,shape = burst.device,burst.shape
 
@@ -59,7 +118,7 @@ def stn_basic_est_ref(images,args,ref,sigma):
         model.zero_grad()
 
         # -- state loss --
-        loss = model.align_loss(burst,images.clean/255.)
+        loss = model.align_loss_ransac(burst,images.clean/255.)
         if i % 100 == 0:
             print("loss.item(): ",loss.item())
 
@@ -80,7 +139,7 @@ def stn_basic_est_ref(images,args,ref,sigma):
         # -- dloss --
         dloss = abs(loss.item() - loss_prev)
         loss_prev = loss.item()
-        if dloss < 1e-10: break
+        # if dloss < 1e-10: break
 
     # -- compute basic estimate --
     warped = model(burst).detach()

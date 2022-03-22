@@ -12,6 +12,7 @@ from vnlb.utils import groups2patches,patches2groups
 from vnlb.utils.gpu_utils import apply_yuv2rgb
 # from vnlb.gpu.patch_subset import exec_patch_subset
 # from vnlb.gpu.patch_utils import yuv2rgb_patches,patches_psnrs
+from faiss.contrib import kn3
 
 
 def denoise(patches,args):
@@ -28,12 +29,12 @@ def denoise(patches,args):
     cnoisy,cbasic = center_patches(patches.noisy,patches.basic,
                                    patches.flat,args.step==1,args.c)
 
-    # -- flatten across batch --
+    # -- flatten across color-channel and batch --
     flat_bdim(patches)
 
     # -- cov --
     pinput = patches.noisy if args.cpatches == "noisy" else patches.basic
-    covMat,eigVals,eigVecs = compute_cov_mat(pinput,args.rank)
+    covMat,eigVals,eigVecs = compute_cov_mat(pinput,args.rank,args.eigh_method)
 
     # -- eigen values --
     eigVals_rs = rearrange(eigVals,'(b c) p -> b c p',b=bsize)
@@ -109,7 +110,7 @@ def centering(patches,center=None):
     patches[...] -= center
     return center
 
-def compute_cov_mat(patches,rank):
+def compute_cov_mat(patches,rank,eigh_method):
 
     with torch.no_grad():
 
@@ -117,11 +118,18 @@ def compute_cov_mat(patches,rank):
         bsize,num,pdim = patches.shape
         covMat = torch.matmul(patches.transpose(2,1),patches)
         covMat /= num
+        print("covMat.shape: ",covMat.shape)
 
         # -- eigen stuff --
-        eigVals,eigVecs = torch.linalg.eigh(covMat)
-        eigVals= torch.flip(eigVals,dims=(1,))
-        eigVecs = torch.flip(eigVecs,dims=(2,))[...,:rank]
+        if eigh_method == "torch":
+            eigVals,eigVecs = torch.linalg.eigh(covMat)
+            eigVals= torch.flip(eigVals,dims=(1,))
+            eigVecs = torch.flip(eigVecs,dims=(2,))[...,:rank]
+        elif eigh_method == "faiss":
+            eigVals,eigVecs = kn3.tiny_eigh(covMat.clone())
+            eigVecs = eigVecs[...,:rank]
+        else:
+            raise ValueError(f"Uknown eigh method [{eigh_method}]")
 
     return covMat,eigVals,eigVecs
 

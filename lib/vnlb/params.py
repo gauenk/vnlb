@@ -47,9 +47,10 @@ def default_params(sigma,verbose=False):
     params.var_mode = [0,0]
     params.variThres = [2.7,0.7] # 0.7
     params.verbose = [verbose,verbose]
+    params.eigh_method = ["torch","torch"]
     return params
 
-def get_params(sigma,verbose=False):
+def get_params(sigma,verbose=False,version=None):
     params = default_params(sigma,verbose)
     # version = "default"
     # version = "exp"
@@ -60,7 +61,8 @@ def get_params(sigma,verbose=False):
     # version = "sss_v5" # smart-search-space
     # version = "sss_v6" # smart-search-space
     # version = "iphone"
-    version = "iphone_v2"
+    if version is None:
+        version = "iphone_v2"
     print("version: ",version)
     if version == "exp":
         params['nSimilarPatches'][0] = 100

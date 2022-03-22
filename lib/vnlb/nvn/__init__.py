@@ -19,12 +19,12 @@ def load_nn():
     pass
 
 def nn_v_nl():
+    pass
 
-    # -- load output images --
-    clean = load_clean()
-    noisy = load_noisy()
-    deno_nl = load_nl()
-    deno_nn = load_nn()
+    # # -- load output images --
+    # clean = load_clean()
+    # noisy = load_noisy()
+    # deno_nl = load_nl()
+    # deno_nn = load_nn()
 
-    return deno_nl,deno_nn
-
+    # return deno_nl,deno_nn
